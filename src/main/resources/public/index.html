@@ -35,16 +35,26 @@
 
   <!-- ============ Application ============ -->
   <div id="app" class="app" hidden>
-    <aside class="barre">
-      <div class="logo"><span>INPT</span>Stages</div>
-      <nav id="menu"></nav>
-      <div class="profil">
-        <div id="profil-nom"></div>
-        <div id="profil-role" class="muted"></div>
-        <button id="btn-cle" class="btn lien">Ma clé d'API</button><br>
-        <button id="btn-deconnexion" class="btn lien">Se déconnecter</button>
+    <header class="barre-haut">
+      <div class="barre-haut-interieur">
+        <div class="logo"><span>INPT</span>Stages</div>
+        <nav id="menu" aria-label="Navigation principale"></nav>
+        <details class="profil" id="profil">
+          <summary>
+            <span class="avatar" id="profil-initiales"></span>
+            <span class="profil-texte">
+              <span id="profil-nom"></span>
+              <span id="profil-role"></span>
+            </span>
+            <span class="chevron" aria-hidden="true">▾</span>
+          </summary>
+          <div class="profil-menu">
+            <button id="btn-cle" type="button">Ma clé d'API</button>
+            <button id="btn-deconnexion" type="button" class="deconnexion">Se déconnecter</button>
+          </div>
+        </details>
       </div>
-    </aside>
+    </header>
     <main>
       <header class="entete">
         <h1 id="titre-vue"></h1>

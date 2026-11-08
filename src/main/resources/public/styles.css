@@ -4,8 +4,11 @@
   --texte: #1d2433;
   --muted: #6b7489;
   --bord: #e3e7ef;
-  --primaire: #0b3d91;
-  --primaire-clair: #e6edf9;
+  --marine: #0b2545;
+  --ciel: #4cc9f0;
+  --largeur: 1320px;
+  --primaire: #0f2c59;
+  --primaire-clair: #e7edf7;
   --succes: #198754;
   --succes-clair: #e3f4ea;
   --alerte: #b7791f;
@@ -44,20 +47,40 @@ textarea { min-height: 90px; resize: vertical; }
 .comptes-demo button { text-align: left; border: 1px solid var(--bord); background: #fafbfe; border-radius: 8px; padding: 7px 10px; cursor: pointer; font: inherit; font-size: .9rem; }
 .comptes-demo button:hover { border-color: var(--primaire); background: var(--primaire-clair); }
 
-/* ---------- Mise en page ---------- */
-.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-.barre { background: #0a1f44; color: #cfd6ea; padding: 20px 14px; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 0; height: 100vh; }
-.barre .logo { color: #fff; padding: 0 8px; }
-#menu { display: grid; gap: 2px; flex: 1; align-content: start; }
-#menu button { all: unset; cursor: pointer; padding: 9px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-#menu button:hover { background: rgba(255,255,255,.06); color: #fff; }
-#menu button.actif { background: #1f5bbf; color: #fff; }
-#menu .pastille { background: #e25555; color: #fff; border-radius: 99px; font-size: .75rem; padding: 0 7px; }
-.profil { border-top: 1px solid rgba(255,255,255,.1); padding: 14px 8px 0; }
-.profil #profil-nom { color: #fff; font-weight: 600; }
-main { padding: 26px 32px 60px; min-width: 0; }
+/* ---------- Mise en page : barre de navigation supérieure ---------- */
+.app { min-height: 100vh; }
+.barre-haut { position: sticky; top: 0; z-index: 15; background: var(--marine); color: #cfd8ea; box-shadow: 0 2px 10px rgba(11, 37, 69, .25); }
+.barre-haut-interieur { max-width: var(--largeur); margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 20px; }
+.barre-haut .logo { color: #fff; flex: none; }
+.barre-haut .logo span { background: #fff; color: var(--marine); }
+#menu { flex: 1; min-width: 0; display: flex; align-self: stretch; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+#menu::-webkit-scrollbar { display: none; }
+#menu > :first-child { margin-left: auto; }
+#menu > :last-child { margin-right: auto; }
+#menu button { all: unset; cursor: pointer; padding: 0 16px; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-weight: 600; font-size: .92rem;
+  border-bottom: 3px solid transparent; border-top: 3px solid transparent; transition: background .15s, color .15s; }
+#menu button:hover { color: #fff; background: rgba(255, 255, 255, .06); }
+#menu button:focus-visible { outline: 2px solid var(--ciel); outline-offset: -4px; }
+#menu button.actif { color: #fff; background: rgba(255, 255, 255, .09); border-bottom-color: var(--ciel); }
+#menu .pastille { background: #e25555; color: #fff; border-radius: 99px; font-size: .72rem; padding: 0 7px; line-height: 1.5; }
+.profil { position: relative; flex: none; }
+.profil summary { list-style: none; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 10px; border-radius: 10px; }
+.profil summary::-webkit-details-marker { display: none; }
+.profil summary:hover, .profil[open] summary { background: rgba(255, 255, 255, .08); }
+.avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ciel); color: var(--marine); font-weight: 700; font-size: .8rem; }
+.profil-texte { display: grid; line-height: 1.2; }
+#profil-nom { color: #fff; font-weight: 600; font-size: .9rem; }
+#profil-role { color: #9fb3d6; font-size: .78rem; }
+.chevron { font-size: .8rem; color: #9fb3d6; }
+.profil-menu { position: absolute; right: 0; top: calc(100% + 8px); min-width: 210px; background: #fff; border: 1px solid var(--bord); border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(11, 37, 69, .18); padding: 6px; display: grid; }
+.profil-menu button { all: unset; cursor: pointer; padding: 9px 12px; border-radius: 8px; color: var(--texte); font-size: .9rem; }
+.profil-menu button:hover { background: var(--primaire-clair); color: var(--primaire); }
+.profil-menu .deconnexion { color: var(--danger); border-top: 1px solid var(--bord); border-radius: 0 0 8px 8px; margin-top: 4px; }
+.profil-menu .deconnexion:hover { background: var(--danger-clair); color: var(--danger); }
+main { max-width: var(--largeur); margin: 0 auto; padding: 28px 24px 60px; min-width: 0; }
 .entete { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-.entete h1 { margin: 0; }
+.entete h1 { margin: 0; color: var(--marine); }
 
 /* ---------- Composants ---------- */
 .btn { border: 1px solid var(--bord); background: #fff; color: var(--texte); padding: 8px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600; font-size: .9rem; }
@@ -144,10 +167,16 @@ tr.cliquable:hover td { background: #fafbff; }
 .toast.ok { background: var(--succes); }
 @keyframes entree { from { transform: translateY(10px); opacity: 0; } }
 
-@media (max-width: 860px) {
-  .app { grid-template-columns: 1fr; }
-  .barre { position: static; height: auto; }
-  #menu { grid-auto-flow: column; overflow-x: auto; }
-  main { padding: 18px 16px 40px; }
+/* Menus longs (responsable) : profil réduit à l’avatar, onglets plus compacts */
+.app.menu-long .profil-texte, .app.menu-long .chevron { display: none; }
+.app.menu-long #menu button { padding: 0 11px; font-size: .88rem; }
+@media (max-width: 960px) {
+  .profil-texte, .chevron { display: none; }
+  .barre-haut-interieur { gap: 12px; padding: 0 12px; }
+  #menu button { padding: 0 10px; }
+}
+@media (max-width: 640px) {
+  .barre-haut .logo { font-size: 0; gap: 0; }
+  main { padding: 18px 14px 40px; }
   .deux-colonnes { grid-template-columns: 1fr; }
 }

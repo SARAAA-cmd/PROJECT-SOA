@@ -62,12 +62,16 @@ const erreurs = [];
   await capture('entreprise-offres');
 
   // 3b. Boîte e-mail de test (Mailpit) : vrais e-mails envoyés en SMTP
-  await page.goto(MAILPIT + '/');
-  await page.waitForTimeout(1500);
-  await capture('mailpit-boite');
-  await page.goto(MAILPIT + '/view/latest');
-  await page.waitForTimeout(2000);
-  await capture('mailpit-email');
+  if (process.env.SANS_MAILPIT) {
+    console.log('Mailpit ignoré (SANS_MAILPIT)');
+  } else {
+    await page.goto(MAILPIT + '/');
+    await page.waitForTimeout(1500);
+    await capture('mailpit-boite');
+    await page.goto(MAILPIT + '/view/latest');
+    await page.waitForTimeout(2000);
+    await capture('mailpit-email');
+  }
 
   // 4. Étudiante : notifications et stage
   await connexion('E2026001');

@@ -153,9 +153,11 @@ let vueCourante = null;
 
 async function afficher(vue) {
   vueCourante = vue;
+  $('#profil')?.removeAttribute('open');
   try { sessionStorage.setItem('vue', vue); } catch (e) { /* ignoré */ }
   const u = Auth.utilisateur();
   $$('#menu button').forEach((b) => b.classList.toggle('actif', b.dataset.vue === vue));
+  $('#menu button.actif')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   const libelle = MENUS[u.role].find((m) => m[0] === vue)?.[1] || '';
   $('#titre-vue').textContent = libelle;
   $('#actions-vue').innerHTML = '';
@@ -200,6 +202,7 @@ async function demarrerApplication() {
   $('#app').hidden = false;
   $('#menu').innerHTML = MENUS[u.role].map(([v, l]) => `<button data-vue="${v}">${l}</button>`).join('');
   $$('#menu button').forEach((b) => b.addEventListener('click', () => afficher(b.dataset.vue)));
+  $('#app').classList.toggle('menu-long', MENUS[u.role].length > 5);
   let nom = u.username;
   try {
     if (u.role === 'ETUDIANT') { const e = await Soap.appeler('etudiants', 'consulterEtudiant', { matricule: u.refId }); nom = `${e.prenom} ${e.nom}`; }
@@ -208,6 +211,7 @@ async function demarrerApplication() {
   } catch (e) { /* nom par défaut */ }
   $('#profil-nom').textContent = nom;
   $('#profil-role').textContent = LIBELLES[u.role];
+  $('#profil-initiales').textContent = nom.split(/\s+/).filter(Boolean).slice(0, 2).map((m) => m[0].toUpperCase()).join('');
   let vue = null;
   try { vue = sessionStorage.getItem('vue'); } catch (e) { vue = null; }
   afficher(MENUS[u.role].some((m) => m[0] === vue) ? vue : MENUS[u.role][0][0]);
@@ -797,7 +801,9 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#form-connexion').password.value = b.dataset.p;
     $('#form-connexion').requestSubmit();
   }));
+  document.addEventListener('click', (e) => { if (!e.target.closest('#profil')) $('#profil').removeAttribute('open'); });
   $('#btn-cle').addEventListener('click', async () => {
+    $('#profil').removeAttribute('open');
     if (!confirm('Générer une nouvelle clé d\'API ? L\'ancienne sera révoquée.')) return;
     try {
       const r = await Api.post('/moi/cle-api');
