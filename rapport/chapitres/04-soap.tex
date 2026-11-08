@@ -1,0 +1,243 @@
+\chapter{Services SOAP}\label{chap:soap}
+
+\section{Conception commune}
+Les trois services suivent la même structure, de type \emph{contract-first} par annotations :
+\begin{itemize}
+  \item une \textbf{interface de service} (SEI) annotée \code{@WebService}, qui définit le contrat et génère le WSDL ;
+  \item une \textbf{implémentation} qui applique le contrôle d'accès, la validation et les règles de gestion ;
+  \item un \textbf{DAO} JDBC limité aux tables du service ;
+  \item des \textbf{DTO JAXB} (\code{@XmlType}) portant les types du schéma XSD ; les dates utilisent le type \code{xs:date}.
+\end{itemize}
+
+Chaque opération déclare une faute métier unique, \code{ServiceException}, sérialisée en \code{<detail>} sous la forme
+d'un élément \code{ServiceFault} (espace de noms \code{http://stages.universite.com/commun}) :
+
+\begin{table}[htbp]
+\centering
+\caption{Codes de la faute métier \code{ServiceFault}}\label{tab:faults}
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\textbf{Code} & \textbf{Signification} \\
+\midrule
+\code{DONNEES\_INVALIDES} & Échec de validation ; la liste \code{detail} contient \emph{toutes} les erreurs détectées \\
+\code{RESSOURCE\_INTROUVABLE} & Matricule ou identifiant inconnu \\
+\code{CONFLIT} & Unicité violée (matricule, e-mail, raison sociale) \\
+\code{REGLE\_METIER} & Règle de gestion non respectée (suppression interdite, plus de place…) \\
+\code{ACCES\_REFUSE} & Rôle ou périmètre de l'appelant insuffisant \\
+\code{ERREUR\_TECHNIQUE} & Service tiers indisponible lors d'une composition \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Une requête sans en-tête WS-Security valide est rejetée avant d'atteindre le service par une faute standard
+\code{wsse:FailedAuthentication} (chapitre~\ref{chap:securite}). Les WSDL et XSD exportés sont fournis dans
+\code{docs/wsdl/}.
+
+\section{Service 1 — Gestion des étudiants}
+\textbf{Adresse} : \code{/ws/etudiants} \quad \textbf{Espace de noms} : \code{http://stages.universite.com/etudiants}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Opérations du service Étudiants}
+\begin{tabularx}{\textwidth}{@{}lYYl@{}}
+\toprule
+\textbf{Opération} & \textbf{Entrée} & \textbf{Sortie / règles} & \textbf{Rôles} \\
+\midrule
+\code{ajouterEtudiant} & \code{Etudiant} & Étudiant créé (statut \code{ACTIF} par défaut) ; matricule et e-mail uniques & Resp. \\
+\code{consulterEtudiant} & \code{matricule} & Fiche complète ; un étudiant ne lit que la sienne ; téléphone et e-mail masqués pour une entreprise & Tous \\
+\code{modifierEtudiant} & \code{Etudiant} & Fiche mise à jour, mêmes validations & Resp. \\
+\code{supprimerEtudiant} & \code{matricule} & \code{boolean} ; interdit si \code{EN\_STAGE} & Resp. \\
+\code{listerEtudiants} & \code{filiere}?, \code{statut}? & Liste filtrée triée par nom & Resp., Syst. \\
+\code{verifierEtudiant} & \code{matricule} & \code{VerificationEtudiant} : existe, statut, éligible, message & Tous \\
+\code{changerStatutEtudiant} & \code{matricule}, \code{statut} & Fiche mise à jour & Resp., Syst. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Validation} : matricule au format \code{[A-Z]\{1,3\}[0-9]\{4,10\}} (ex. \code{E2026001}), nom et prénom obligatoires
+(80 caractères max), e-mail et téléphone au bon format, niveau dans \{L1…D\}, statut dans l'énumération.
+
+\section{Service 2 — Gestion des entreprises}
+\textbf{Adresse} : \code{/ws/entreprises} \quad \textbf{Espace de noms} : \code{http://stages.universite.com/entreprises}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Opérations du service Entreprises}
+\begin{tabularx}{\textwidth}{@{}lYYl@{}}
+\toprule
+\textbf{Opération} & \textbf{Entrée} & \textbf{Sortie / règles} & \textbf{Rôles} \\
+\midrule
+\code{ajouterEntreprise} & \code{Entreprise} & Entreprise créée ; raison sociale unique ; date de référencement automatique & Resp. \\
+\code{consulterEntreprise} & \code{entrepriseId} & Fiche complète (secteur, coordonnées, contact) & Tous \\
+\code{modifierEntreprise} & \code{Entreprise} & Une entreprise modifie sa fiche mais pas son référencement & Resp., Ent. \\
+\code{supprimerEntreprise} & \code{entrepriseId} & Interdit si l'entreprise a des offres actives & Resp. \\
+\code{listerEntreprises} & \code{secteurActivite}? & Liste filtrée & Tous \\
+\code{verifierEntreprise} & \code{entrepriseId} & \code{VerificationEntreprise} : existe, référencée, message & Tous \\
+\code{consulterOffresEntreprise} & \code{entrepriseId} & Liste d'\code{Offre} — \emph{composition} : appel SOAP au service Offres & Tous \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Service 3 — Gestion des offres de stage}
+\textbf{Adresse} : \code{/ws/offres} \quad \textbf{Espace de noms} : \code{http://stages.universite.com/offres}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Opérations du service Offres}
+\begin{tabularx}{\textwidth}{@{}lYYl@{}}
+\toprule
+\textbf{Opération} & \textbf{Entrée} & \textbf{Sortie / règles} & \textbf{Rôles} \\
+\midrule
+\code{creerOffre} & \code{Offre} & Statut \code{ACTIVE} ; date limite future ; entreprise référencée (appel SOAP Entreprises) & Resp., Ent.\footnotemark \\
+\code{consulterOffre} & \code{offreId} & Offre complète & Tous \\
+\code{modifierOffre} & \code{Offre} & Places $\geq$ places déjà attribuées ; propriétaire et date de publication figés & Resp., Ent. \\
+\code{supprimerOffre} & \code{offreId} & Interdit si des stagiaires ont été retenus & Resp., Ent. \\
+\code{listerOffres} & \code{statut}?, \code{entrepriseId}? & Liste triée par date limite & Tous \\
+\code{listerOffresDisponibles} & — & Offres actives, non expirées, avec places & Tous \\
+\code{verifierDisponibilite} & \code{offreId} & \code{DisponibiliteOffre} : active, date dépassée, places, message & Tous \\
+\code{verifierCompatibilite} & \code{offreId}, \code{filiere}, \code{niveau}, \code{competences} & \code{Compatibilite} : filière, niveau, date limite, score de compétences, manques, motifs & Tous \\
+\code{reserverPlace} & \code{offreId} & Décrément atomique ; passage à \code{POURVUE} à zéro & Resp., Syst. \\
+\code{listerOffresExpirantBientot} & \code{jours} & Offres actives clôturant dans l'intervalle & Tous \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\footnotetext{Une entreprise ne peut créer, modifier ou supprimer que ses propres offres.}
+
+\paragraph{Compatibilité « intelligente ».} \code{verifierCompatibilite} combine trois critères \emph{bloquants} —
+filière ciblée (liste vide = toutes), niveau minimum comparé selon l'ordre LMD, et date limite non dépassée — et un \textbf{score de
+compétences} indicatif : pourcentage des compétences requises que possède l'étudiant, comparaison insensible à la casse
+et aux accents. Le score est conservé avec la candidature et présenté à l'entreprise pour l'aider à trier les dossiers.
+
+\paragraph{Réservation sans sur-attribution.} \code{reserverPlace} exécute
+\code{UPDATE offre SET places\_disponibles = places\_disponibles - 1 … WHERE id = ? AND places\_disponibles > 0} :
+la condition dans la clause \code{WHERE} rend l'opération atomique, même si deux acceptations sont simultanées.
+
+\section{Extrait de WSDL}
+\begin{lstlisting}[language=XML, caption={Extrait de \code{etudiants.wsdl} : opération \code{verifierEtudiant}}]
+<message name="verifierEtudiant">
+  <part name="parameters" element="tns:verifierEtudiant"/>
+</message>
+<message name="ServiceException">
+  <part name="fault" element="ns1:ServiceFault"/>
+</message>
+<portType name="EtudiantService">
+  <operation name="verifierEtudiant">
+    <input  message="tns:verifierEtudiant"/>
+    <output message="tns:verifierEtudiantResponse"/>
+    <fault  message="tns:ServiceException" name="ServiceException"/>
+  </operation>
+</portType>
+<binding name="EtudiantPortBinding" type="tns:EtudiantService">
+  <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+  <operation name="verifierEtudiant">
+    <soap:operation soapAction=""/>
+    <input><soap:body use="literal"/></input>
+    <output><soap:body use="literal"/></output>
+    <fault name="ServiceException"><soap:fault name="ServiceException" use="literal"/></fault>
+  </operation>
+</binding>
+<service name="EtudiantService">
+  <port name="EtudiantPort" binding="tns:EtudiantPortBinding">
+    <soap:address location="http://localhost:8090/ws/etudiants"/>
+  </port>
+</service>
+\end{lstlisting}
+
+\begin{lstlisting}[language=XML, caption={Type XSD \code{VerificationEtudiant} généré}]
+<xs:complexType name="VerificationEtudiant">
+  <xs:sequence>
+    <xs:element name="matricule" type="xs:string" minOccurs="0"/>
+    <xs:element name="existe"    type="xs:boolean"/>
+    <xs:element name="statut"    type="xs:string" minOccurs="0"/>
+    <xs:element name="eligible"  type="xs:boolean"/>
+    <xs:element name="message"   type="xs:string" minOccurs="0"/>
+  </xs:sequence>
+</xs:complexType>
+\end{lstlisting}
+
+\section{Exemples d'échanges}
+Les échanges suivants ont été obtenus sur la plateforme en fonctionnement (fichiers \code{docs/soap/}).
+
+\begin{lstlisting}[language=XML, caption={Requête \code{verifierCompatibilite} avec en-tête WS-Security}]
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:off="http://stages.universite.com/offres"
+    xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+  <soapenv:Header>
+    <wsse:Security soapenv:mustUnderstand="1">
+      <wsse:UsernameToken>
+        <wsse:Username>admin</wsse:Username>
+        <wsse:Password>Admin@2026</wsse:Password>
+      </wsse:UsernameToken>
+    </wsse:Security>
+  </soapenv:Header>
+  <soapenv:Body>
+    <off:verifierCompatibilite>
+      <offreId>1</offreId> <filiere>AMOA</filiere> <niveau>M1</niveau>
+      <competences>BPMN, UML, Java</competences>
+    </off:verifierCompatibilite>
+  </soapenv:Body>
+</soapenv:Envelope>
+\end{lstlisting}
+
+\begin{lstlisting}[language=XML, caption={Réponse obtenue}]
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:verifierCompatibiliteResponse xmlns:ns2="http://stages.universite.com/offres">
+      <compatibilite>
+        <offreId>1</offreId>
+        <compatible>true</compatible>
+        <filiereCompatible>true</filiereCompatible>
+        <niveauCompatible>true</niveauCompatible>
+        <scoreCompetences>50</scoreCompetences>
+        <competenceManquante>SQL</competenceManquante>
+        <competenceManquante>Gestion de projet</competenceManquante>
+      </compatibilite>
+    </ns2:verifierCompatibiliteResponse>
+  </S:Body>
+</S:Envelope>
+\end{lstlisting}
+
+\begin{lstlisting}[language=XML, caption={SOAP Fault de validation (\code{ajouterEtudiant} avec données invalides)}]
+<S:Fault>
+  <faultcode>S:Server</faultcode>
+  <faultstring>Données invalides</faultstring>
+  <detail>
+    <ns3:ServiceFault xmlns:ns3="http://stages.universite.com/commun">
+      <code>DONNEES_INVALIDES</code>
+      <message>Données invalides</message>
+      <detail>Le champ 'matricule' est invalide (attendu : lettres majuscules suivies de chiffres, ex. E2026001)</detail>
+      <detail>Le champ 'email' est invalide (attendu : adresse e-mail)</detail>
+      <detail>Le champ 'niveau' doit valoir l'une des valeurs [L1, L2, L3, M1, M2, D]</detail>
+    </ns3:ServiceFault>
+  </detail>
+</S:Fault>
+\end{lstlisting}
+
+\section{Implémentation}
+\begin{lstlisting}[language=Java, caption={Contrat (extrait) et implémentation de \code{verifierEtudiant}}]
+@WebService(name = "EtudiantService", targetNamespace = Namespaces.ETUDIANTS)
+public interface EtudiantService {
+    @WebMethod(operationName = "verifierEtudiant")
+    @WebResult(name = "verification")
+    VerificationEtudiant verifierEtudiant(@WebParam(name = "matricule") String matricule)
+            throws ServiceException;
+    // ...
+}
+
+@Override
+public VerificationEtudiant verifierEtudiant(String matricule) throws ServiceException {
+    SoapSecurity.utilisateur(context);                 // appelant authentifié (WS-Security)
+    if (matricule == null || matricule.isBlank()) {
+        throw ServiceException.invalide(List.of("Le matricule est obligatoire"));
+    }
+    return dao.trouver(matricule)
+            .map(e -> {
+                boolean eligible = Etudiant.ACTIF.equals(e.getStatut());
+                String msg = eligible ? "Étudiant actif, éligible aux candidatures"
+                        : "Étudiant non éligible (statut " + e.getStatut() + ")";
+                return new VerificationEtudiant(matricule, true, e.getStatut(), eligible, msg);
+            })
+            .orElseGet(() -> new VerificationEtudiant(matricule, false, null, false,
+                    "Aucun étudiant ne correspond au matricule " + matricule));
+}
+\end{lstlisting}

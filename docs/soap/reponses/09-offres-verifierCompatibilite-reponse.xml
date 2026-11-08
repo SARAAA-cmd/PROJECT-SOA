@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:verifierCompatibiliteResponse xmlns:ns2="http://stages.universite.com/offres" xmlns:ns3="http://stages.universite.com/commun">
+      <compatibilite>
+        <offreId>1</offreId>
+        <compatible>true</compatible>
+        <filiereCompatible>true</filiereCompatible>
+        <niveauCompatible>true</niveauCompatible>
+        <scoreCompetences>50</scoreCompetences>
+        <competenceManquante>SQL</competenceManquante>
+        <competenceManquante>Gestion de projet</competenceManquante>
+      </compatibilite>
+    </ns2:verifierCompatibiliteResponse>
+  </S:Body>
+</S:Envelope>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:ajouterEtudiantResponse xmlns:ns2="http://stages.universite.com/etudiants" xmlns:ns3="http://stages.universite.com/commun">
+      <etudiant>
+        <matricule>E2026010</matricule>
+        <nom>Bennani</nom>
+        <prenom>Salma</prenom>
+        <email>salma.bennani@etu.universite.example</email>
+        <telephone>+212 6 11 22 33 44</telephone>
+        <filiere>AMOA</filiere>
+        <niveau>M1</niveau>
+        <competences>BPMN, UML, SQL</competences>
+        <statut>ACTIF</statut>
+        <dateInscription>2026-10-23</dateInscription>
+      </etudiant>
+    </ns2:ajouterEtudiantResponse>
+  </S:Body>
+</S:Envelope>

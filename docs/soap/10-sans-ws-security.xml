@@ -1,0 +1,7 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:etu="http://stages.universite.com/etudiants"
+                  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+  <soapenv:Body>
+    <etu:consulterEtudiant><matricule>E2026001</matricule></etu:consulterEtudiant>
+  </soapenv:Body>
+</soapenv:Envelope>

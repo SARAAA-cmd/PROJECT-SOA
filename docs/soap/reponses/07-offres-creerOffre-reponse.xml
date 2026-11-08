@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:creerOffreResponse xmlns:ns2="http://stages.universite.com/offres" xmlns:ns3="http://stages.universite.com/commun">
+      <offre>
+        <id>7</id>
+        <entrepriseId>2</entrepriseId>
+        <titre>Analyste fonctionnel junior</titre>
+        <description>Recueil des besoins et rédaction de spécifications.</description>
+        <competencesRequises>UML, BPMN, SQL</competencesRequises>
+        <dureeMois>4</dureeMois>
+        <dateLimite>2027-01-15</dateLimite>
+        <nombrePlaces>2</nombrePlaces>
+        <placesDisponibles>2</placesDisponibles>
+        <filieresCiblees>AMOA</filieresCiblees>
+        <niveauMinimum>L3</niveauMinimum>
+        <lieu>Rabat</lieu>
+        <statut>ACTIVE</statut>
+        <datePublication>2026-10-23</datePublication>
+      </offre>
+    </ns2:creerOffreResponse>
+  </S:Body>
+</S:Envelope>

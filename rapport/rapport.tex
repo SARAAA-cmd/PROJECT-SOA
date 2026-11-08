@@ -1,0 +1,137 @@
+% =====================================================================
+%  Rapport technique — Projet SOA : Gestion intelligente des stages
+%  Compilation : latexmk -pdf rapport.tex
+% =====================================================================
+\documentclass[11pt,a4paper,oneside]{report}
+
+% ---------- À PERSONNALISER ----------
+\newcommand{\auteurs}{Prénom NOM \\ Prénom NOM}
+\newcommand{\encadrant}{Pr. NOM DE L'ENSEIGNANT}
+\newcommand{\etablissement}{Institut National des Postes et Télécommunications (INPT)}
+\newcommand{\filiere}{Filière AMOA — Cours SOA}
+\newcommand{\annee}{Année universitaire 2026--2027}
+% -------------------------------------
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=2.3cm,headheight=14pt]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs,tabularx,longtable,multirow,array}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{pdflscape}
+\usepackage{rotating}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,backgrounds,calc,automata}
+\usepackage[hidelinks,pdfusetitle]{hyperref}
+
+\definecolor{primaire}{HTML}{0B3D91}
+\definecolor{fonce}{HTML}{0A1F44}
+\definecolor{gris}{HTML}{6B7489}
+\definecolor{fondcode}{HTML}{F6F8FC}
+\definecolor{soap}{HTML}{E8ECFD}
+\definecolor{rest}{HTML}{E3F4EA}
+\definecolor{bpmn}{HTML}{FDF3DF}
+\definecolor{ok}{HTML}{198754}
+
+\hypersetup{colorlinks=true,linkcolor=fonce,urlcolor=primaire,citecolor=primaire}
+\titleformat{\chapter}[display]{\normalfont\bfseries\color{fonce}}{\large\color{primaire}\MakeUppercase{\chaptertitlename}~\thechapter}{4pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-10pt}{24pt}
+\titleformat{\section}{\normalfont\Large\bfseries\color{fonce}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{fonce}}{\thesubsection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize\color{gris}Projet SOA — Gestion des stages}
+\fancyhead[R]{\footnotesize\color{gris}\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parskip}{4pt}
+\setlength{\emergencystretch}{3em}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{5}
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\ok}{\textcolor{ok}{\textbf{OK}}}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize, backgroundcolor=\color{fondcode}, frame=single, rulecolor=\color{black!12},
+  breaklines=true, breakatwhitespace=false, columns=fullflexible, keepspaces=true, showstringspaces=false,
+  keywordstyle=\color{primaire}\bfseries, commentstyle=\color{gris}\itshape, stringstyle=\color{ok},
+  xleftmargin=4pt, xrightmargin=4pt, aboveskip=8pt, belowskip=6pt, tabsize=2,
+  literate={é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {ë}{{\"e}}1 {à}{{\`a}}1 {â}{{\^a}}1 {î}{{\^i}}1 {ï}{{\"i}}1
+           {ô}{{\^o}}1 {ù}{{\`u}}1 {û}{{\^u}}1 {ç}{{\c c}}1 {É}{{\'E}}1 {È}{{\`E}}1 {À}{{\`A}}1 {Ç}{{\c C}}1
+           {«}{{\guillemotleft}}1 {»}{{\guillemotright}}1 {→}{{$\rightarrow$}}1 {œ}{{\oe}}1 {’}{{'}}1 {…}{{...}}1
+}
+
+\lstdefinelanguage{json}{morestring=[b]", stringstyle=\color{ok}}
+
+\title{Gestion intelligente des stages et des offres de recrutement}
+\author{\auteurs}
+
+\begin{document}
+
+% ------------------------------------------------------------------ Garde
+\begin{titlepage}
+  \centering
+  {\large\textsc{\etablissement}}\par
+  {\color{gris}\filiere}\par
+  \vspace{3.2cm}
+  {\color{primaire}\rule{\linewidth}{1.2pt}}\par\vspace{0.6cm}
+  {\Huge\bfseries\color{fonce} Gestion intelligente des stages\\[4pt] et des offres de recrutement\par}
+  \vspace{0.5cm}
+  {\Large Rapport technique du projet SOA\par}
+  \vspace{0.3cm}
+  {\color{primaire}\rule{\linewidth}{1.2pt}}\par
+  \vspace{1.2cm}
+  {\large 3 services SOAP (JAX-WS) \,·\, 3 services REST (JAX-RS) \,·\, orchestration BPMN 2.0 \,·\, interface web\par}
+  \vfill
+  \begin{minipage}[t]{0.45\textwidth}\raggedright
+    \textbf{Réalisé par}\\[2pt] \auteurs
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.45\textwidth}\raggedleft
+    \textbf{Encadré par}\\[2pt] \encadrant
+  \end{minipage}
+  \vspace{2cm}\par
+  {\annee\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+\input{chapitres/01-introduction}
+\input{chapitres/02-architecture}
+\input{chapitres/03-donnees}
+\input{chapitres/04-soap}
+\input{chapitres/05-rest}
+\input{chapitres/06-securite}
+\input{chapitres/07-bpmn}
+\input{chapitres/08-regles}
+\input{chapitres/09-tests}
+\input{chapitres/10-interface}
+\input{chapitres/11-conclusion}
+
+\appendix
+\input{chapitres/annexes}
+
+\end{document}

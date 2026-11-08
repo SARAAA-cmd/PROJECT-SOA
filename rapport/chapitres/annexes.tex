@@ -1,0 +1,60 @@
+\chapter{Mise en œuvre}
+
+\section{Lancement}
+\begin{lstlisting}[language=sh]
+mailpit                            # boîte e-mail de test : http://localhost:8025 (SMTP 1025)
+mvn package                        # compile, teste (28 tests) et produit le jar
+java -jar target/gestion-stages.jar
+# Interface : http://localhost:8090/       WSDL : http://localhost:8090/ws/etudiants?wsdl
+
+docker compose up --build          # variante tout-en-un : plateforme + PostgreSQL + Mailpit
+cd rapport && latexmk -pdf rapport.tex
+\end{lstlisting}
+
+\section{Comptes de démonstration}\label{annexe:comptes}
+\begin{table}[htbp]
+\centering\small
+\caption{Comptes de démonstration}
+\begin{tabularx}{\textwidth}{@{}llY@{}}
+\toprule
+\textbf{Identifiant} & \textbf{Mot de passe} & \textbf{Profil} \\
+\midrule
+\code{admin} & \code{Admin@2026} & Responsable des stages \\
+\code{E2026001} & \code{Etudiant@2026} & Yasmine Benali — AMOA, M1 (2A) \\
+\code{E2026002} & \code{Etudiant@2026} & Omar Haddad — ASEDS, M2 (3A) \\
+\code{E2026003} & \code{Etudiant@2026} & Salma El Amrani — DATA, M1 \\
+\code{E2026004} & \code{Etudiant@2026} & Karim Alaoui — AMOA, L3 (1A) \\
+\code{E2026005} & \code{Etudiant@2026} & Imane Tazi — ICCN, M2, \emph{suspendue} \\
+\code{E2026006} à \code{E2026008} & \code{Etudiant@2026} & Youssef Bennani (SESNum), Hiba Chraibi (Cloud \& IoT), Mehdi Ouazzani (SUD) \\
+\code{atlas}, \code{nova}, \code{fintech}, \code{cyber}, \code{cloud} & \code{Entreprise@2026} & Entreprises référencées \\
+\code{startup} & \code{Entreprise@2026} & Entreprise non référencée \\
+\code{systeme} & \code{Systeme@2026} & Compte technique de l'orchestrateur \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Chaque compte dispose d'une clé d'API de démonstration \code{stg\_demo\_<identifiant>} (par exemple
+\code{stg\_demo\_admin}), utilisable dans l'en-tête \code{X-API-Key} des appels REST.
+
+\section{Organisation du code source}
+\begin{lstlisting}
+src/main/java/com/universite/stages/
+  soap/etudiants|entreprises|offres     services 1 à 3 : contrat, implémentation, DAO, DTO JAXB
+  rest/candidatures|notifications|stages services 4 à 6 : ressources JAX-RS, DAO
+  rest/processus                        API d'orchestration
+  bpmn/                                 moteur Flowable et délégués des tâches de service
+  clients/                              clients SOAP dynamiques, client REST, politique de reprise
+  security/                             WS-Security, PBKDF2, rôles
+  common/                               configuration, JDBC, validation, simulateur de pannes
+src/main/resources/
+  processes/candidature-stage.bpmn20.xml  processus BPMN 2.0 (modèle + diagramme)
+  schema.sql  application.properties  public/ (interface web)
+src/test/java/.../PlateformeIT.java     24 tests d'intégration
+docs/  wsdl/  soap/  postman/  bonita/GUIDE_BONITA.md  SCENARIO_VIDEO.md
+tools/ generer_bpmn.py  rendre_bpmn.js  captures_ui.js
+\end{lstlisting}
+
+\section{Vidéo de démonstration}
+Le déroulé proposé pour la vidéo (environ 10 minutes) est fourni dans \code{docs/SCENARIO\_VIDEO.md} : tests SOAP
+dans SoapUI, collection Postman, parcours étudiant, décision de l'entreprise, simulation de panne et relance par le
+responsable, puis exécution des tests automatisés.

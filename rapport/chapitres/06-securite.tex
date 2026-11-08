@@ -1,0 +1,67 @@
+\chapter{Sécurité des échanges}\label{chap:securite}
+
+\section{Authentification}
+\begin{description}[style=nextline]
+  \item[Services SOAP — WS-Security] Chaque requête doit porter un en-tête OASIS WS-Security 1.0
+        \code{<wsse:Security><wsse:UsernameToken>} déclaré \code{mustUnderstand}. Un intercepteur JAX-WS
+        (\code{SoapSecurityHandler}) extrait le jeton, authentifie l'appelant et dépose l'utilisateur dans le contexte du
+        message. En cas d'échec, la requête n'atteint pas le service : la réponse est une SOAP Fault
+        \code{wsse:FailedAuthentication}. Le WSDL reste consultable sans authentification.
+  \item[Services REST — clé d'API ou HTTP Basic] Un filtre JAX-RS (\code{AuthentificationFilter}, priorité
+        \code{AUTHENTICATION}) accepte deux schémas : une \textbf{clé d'API} dans l'en-tête \code{X-API-Key}, destinée aux
+        applications (orchestrateur, Postman, scripts), ou HTTP Basic, utilisé par l'interface web après connexion.
+        Une clé invalide ou révoquée est refusée (\code{401 CLE\_API\_INVALIDE}). Seul \code{/api/sante} est public.
+  \item[Gestion des clés] Seule l'empreinte SHA-256 de la clé est stockée. \code{POST /api/moi/cle-api} (bouton
+        « Ma clé d'API » de l'interface) génère une nouvelle clé aléatoire de 256 bits, l'affiche une seule fois et
+        révoque la précédente.
+  \item[Appels inter-services] L'orchestrateur et les services composites utilisent un compte technique de rôle
+        \code{SYSTEME}, configurable, injecté par un intercepteur client (SOAP) ou par sa clé d'API (REST).
+\end{description}
+
+\section{Protection des informations sensibles}
+\begin{itemize}
+  \item \textbf{Mots de passe} hachés par PBKDF2-HMAC-SHA256 (120\,000 itérations, sel aléatoire de 128 bits) ;
+        la comparaison s'effectue en temps constant (\code{MessageDigest.isEqual}). Seule une empreinte SHA-256 du couple
+        identifiant/mot de passe est gardée en cache mémoire pour éviter de refaire la dérivation à chaque appel.
+  \item \textbf{Masquage des données personnelles} : lorsqu'une entreprise consulte la fiche d'un candidat
+        (\code{consulterEtudiant}), elle voit son profil académique (filière, niveau, compétences) mais le téléphone et
+        l'e-mail sont masqués (\code{+212 6 \textbullet\textbullet{} \textbullet\textbullet{} \textbullet\textbullet{} 01}, \code{y\textbullet\textbullet\textbullet{}@…}) et l'adresse n'est pas transmise. Les
+        adresses e-mail sont également masquées dans les journaux du serveur.
+  \item \textbf{Cloisonnement des données} : un étudiant ne peut lire que sa fiche, ses candidatures, ses notifications et
+        ses stages ; une entreprise que ses offres, les candidatures et stages qui la concernent, et elle ne peut pas modifier
+        son propre référencement. Les filtres de recherche sont \emph{imposés} côté serveur, indépendamment des paramètres reçus.
+  \item \textbf{Variables de processus} : l'API d'orchestration n'expose qu'une liste blanche de variables.
+  \item \textbf{Requêtes SQL paramétrées} partout (\code{PreparedStatement}), ce qui exclut l'injection SQL.
+  \item \textbf{Interface web} : toutes les données affichées sont échappées (prévention XSS), l'en-tête
+        \code{X-Content-Type-Options: nosniff} est envoyé et les identifiants ne sont conservés qu'en \code{sessionStorage}.
+\end{itemize}
+
+\section{Contrôle d'accès par rôle}
+\begin{table}[htbp]
+\centering\small
+\caption{Matrice des droits (L : lecture, E : écriture, P : périmètre propre uniquement)}
+\begin{tabularx}{\textwidth}{@{}Ycccc@{}}
+\toprule
+\textbf{Ressource / opération} & \textbf{Étudiant} & \textbf{Entreprise} & \textbf{Responsable} & \textbf{Système} \\
+\midrule
+Fiche étudiant (consulter) & L (P) & L & L/E & L/E statut \\
+Entreprise (fiche) & L & L/E (P, hors référencement) & L/E & L \\
+Offres (créer, modifier, supprimer) & L & L/E (P) & L/E & L, réserver \\
+Soumettre une candidature (processus) & E (P) & — & E & — \\
+Candidatures (consulter) & L (P) & L (P) & L & L/E \\
+Annuler / compléter une candidature & E (P) & — & E & E \\
+Décision sur une candidature & — & E (P) & E & — \\
+Notifications & L (P) & L (P) & L/E & E \\
+Stages, comptes rendus & L/E (P) & L/E (P) & L/E & E \\
+Évaluations & L (P) & E (P) & E & — \\
+Incidents, instances, pannes simulées & — & — & L/E & — \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Confidentialité du transport}
+UsernameToken en \code{PasswordText} et HTTP Basic transmettent le mot de passe encodé mais non chiffré : en
+production, la plateforme doit être exposée exclusivement en \textbf{HTTPS} (terminaison TLS par un proxy inverse ou
+\code{HttpsServer} du JDK), ce qui ne demande aucune modification des services. Le contexte de sécurité REST signale
+d'ailleurs si la requête est sécurisée (\code{isSecure()}). Des évolutions possibles sont présentées au
+chapitre~\ref{chap:conclusion} (jetons JWT/OAuth 2, signature WS-Security).

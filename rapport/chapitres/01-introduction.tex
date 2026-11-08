@@ -1,0 +1,52 @@
+\chapter{Introduction}
+
+\section{Contexte}
+Dans le cadre de la transformation numérique des établissements d'enseignement supérieur, l'université souhaite
+disposer d'une plateforme gérant l'ensemble du cycle de vie d'un stage : publication des offres par les entreprises
+partenaires, candidatures des étudiants, sélection, puis suivi du stage jusqu'à son évaluation finale.
+
+Ces activités mobilisent des acteurs et des référentiels distincts (scolarité, relations entreprises, bureau des
+stages) qui évoluent à des rythmes différents. Une \textbf{architecture orientée services} (SOA) est donc pertinente :
+chaque domaine métier est exposé sous la forme d'un service autonome, au contrat explicite, et un
+\textbf{processus métier BPMN} orchestre ces services pour automatiser le traitement d'une candidature, depuis son
+dépôt jusqu'à la décision finale.
+
+\section{Objectifs}
+Le projet répond aux exigences suivantes du cahier des charges :
+\begin{itemize}
+  \item trois services \textbf{SOAP} décrits en WSDL : gestion des étudiants, des entreprises et des offres de stage ;
+  \item trois services \textbf{REST} : gestion des candidatures, notifications, suivi des stages ;
+  \item un \textbf{processus BPMN} d'orchestration comportant tâches de service, événements de début et de fin,
+        passerelles de décision et gestion des erreurs ou indisponibilités de services ;
+  \item la validation des données, la gestion des erreurs et la protection des échanges ;
+  \item en bonus, une \textbf{interface graphique} pour les étudiants, les entreprises et les responsables.
+\end{itemize}
+
+\section{Synthèse de la réalisation}
+\begin{table}[htbp]
+\centering
+\caption{Couverture du cahier des charges}
+\begin{tabularx}{\textwidth}{@{}lYl@{}}
+\toprule
+\textbf{Exigence} & \textbf{Réalisation} & \textbf{Chapitre} \\
+\midrule
+3 services SOAP + WSDL & JAX-WS (Metro), 24 opérations, WSDL publiés sous \code{/ws/*?wsdl} & \ref{chap:soap} \\
+3 services REST & JAX-RS (Jersey), 23 points d'accès JSON (+ 7 pour l'orchestration), codes HTTP normalisés & \ref{chap:rest} \\
+Persistance & JDBC sur H2 (défaut) ou PostgreSQL, testé sur les deux & \ref{chap:donnees} \\
+Processus BPMN & BPMN 2.0 exécuté par Flowable, 4 couloirs, 3 sous-processus, 6 passerelles & \ref{chap:bpmn} \\
+Erreurs et indisponibilités & Reprise exponentielle, événements d'erreur, tâche d'incident, simulateur de pannes & \ref{sec:erreurs} \\
+Sécurité & WS-Security (SOAP), clé d'API ou HTTP Basic (REST), PBKDF2, masquage des données personnelles, contrôle par rôle & \ref{chap:securite} \\
+Notifications & Vrais e-mails HTML envoyés en SMTP et capturés par la boîte de test Mailpit & \ref{chap:rest} \\
+Règles de gestion & 32 règles formalisées et implémentées & \ref{chap:regles} \\
+Tests & 28 tests d'intégration JUnit, collection Postman (45 assertions), requêtes SoapUI & \ref{chap:tests} \\
+Bonus Front-End & Application web à trois espaces aux couleurs de l'INPT, visualisation BPMN en direct & \ref{chap:interface} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Organisation du rapport}
+Le chapitre~\ref{chap:architecture} présente l'architecture SOA et les interactions entre services ; le
+chapitre~\ref{chap:donnees} le modèle de données. Les chapitres~\ref{chap:soap} et~\ref{chap:rest} documentent les
+opérations SOAP et les API REST, le chapitre~\ref{chap:securite} la sécurité. Le chapitre~\ref{chap:bpmn} détaille le
+processus BPMN et la gestion des erreurs, le chapitre~\ref{chap:regles} les règles de gestion, le
+chapitre~\ref{chap:tests} les scénarios de test et le chapitre~\ref{chap:interface} l'interface graphique.

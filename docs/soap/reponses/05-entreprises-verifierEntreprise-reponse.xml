@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:verifierEntrepriseResponse xmlns:ns2="http://stages.universite.com/entreprises" xmlns:ns3="http://stages.universite.com/commun">
+      <verification>
+        <entrepriseId>4</entrepriseId>
+        <existe>true</existe>
+        <referencee>false</referencee>
+        <raisonSociale>StartUp Sans Convention</raisonSociale>
+        <message>Entreprise non référencée par l'université</message>
+      </verification>
+    </ns2:verifierEntrepriseResponse>
+  </S:Body>
+</S:Envelope>

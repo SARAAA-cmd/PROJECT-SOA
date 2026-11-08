@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='UTF-8'?><!-- Published by XML-WS Runtime (https://github.com/eclipse-ee4j/metro-jax-ws). Runtime's version is XML-WS Runtime 4.0.3 git-revision#a57c222. --><xs:schema xmlns:tns="http://stages.universite.com/etudiants" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" targetNamespace="http://stages.universite.com/etudiants">
+
+<xs:element name="ajouterEtudiant" type="tns:ajouterEtudiant"/>
+
+<xs:element name="ajouterEtudiantResponse" type="tns:ajouterEtudiantResponse"/>
+
+<xs:element name="changerStatutEtudiant" type="tns:changerStatutEtudiant"/>
+
+<xs:element name="changerStatutEtudiantResponse" type="tns:changerStatutEtudiantResponse"/>
+
+<xs:element name="consulterEtudiant" type="tns:consulterEtudiant"/>
+
+<xs:element name="consulterEtudiantResponse" type="tns:consulterEtudiantResponse"/>
+
+<xs:element name="listerEtudiants" type="tns:listerEtudiants"/>
+
+<xs:element name="listerEtudiantsResponse" type="tns:listerEtudiantsResponse"/>
+
+<xs:element name="modifierEtudiant" type="tns:modifierEtudiant"/>
+
+<xs:element name="modifierEtudiantResponse" type="tns:modifierEtudiantResponse"/>
+
+<xs:element name="supprimerEtudiant" type="tns:supprimerEtudiant"/>
+
+<xs:element name="supprimerEtudiantResponse" type="tns:supprimerEtudiantResponse"/>
+
+<xs:element name="verifierEtudiant" type="tns:verifierEtudiant"/>
+
+<xs:element name="verifierEtudiantResponse" type="tns:verifierEtudiantResponse"/>
+
+<xs:complexType name="consulterEtudiant">
+<xs:sequence>
+<xs:element name="matricule" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterEtudiantResponse">
+<xs:sequence>
+<xs:element name="etudiant" type="tns:Etudiant" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Etudiant">
+<xs:sequence>
+<xs:element name="matricule" type="xs:string"/>
+<xs:element name="nom" type="xs:string"/>
+<xs:element name="prenom" type="xs:string"/>
+<xs:element name="email" type="xs:string"/>
+<xs:element name="telephone" type="xs:string" minOccurs="0"/>
+<xs:element name="adresse" type="xs:string" minOccurs="0"/>
+<xs:element name="filiere" type="xs:string"/>
+<xs:element name="niveau" type="xs:string"/>
+<xs:element name="competences" type="xs:string" minOccurs="0"/>
+<xs:element name="statut" type="xs:string" minOccurs="0"/>
+<xs:element name="dateInscription" type="xs:date" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="supprimerEtudiant">
+<xs:sequence>
+<xs:element name="matricule" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="supprimerEtudiantResponse">
+<xs:sequence>
+<xs:element name="supprime" type="xs:boolean"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="modifierEtudiant">
+<xs:sequence>
+<xs:element name="etudiant" type="tns:Etudiant" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="modifierEtudiantResponse">
+<xs:sequence>
+<xs:element name="etudiant" type="tns:Etudiant" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="changerStatutEtudiant">
+<xs:sequence>
+<xs:element name="matricule" type="xs:string" minOccurs="0"/>
+<xs:element name="statut" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="changerStatutEtudiantResponse">
+<xs:sequence>
+<xs:element name="etudiant" type="tns:Etudiant" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierEtudiant">
+<xs:sequence>
+<xs:element name="matricule" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierEtudiantResponse">
+<xs:sequence>
+<xs:element name="verification" type="tns:VerificationEtudiant" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="VerificationEtudiant">
+<xs:sequence>
+<xs:element name="matricule" type="xs:string" minOccurs="0"/>
+<xs:element name="existe" type="xs:boolean"/>
+<xs:element name="statut" type="xs:string" minOccurs="0"/>
+<xs:element name="eligible" type="xs:boolean"/>
+<xs:element name="message" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="ajouterEtudiant">
+<xs:sequence>
+<xs:element name="etudiant" type="tns:Etudiant" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="ajouterEtudiantResponse">
+<xs:sequence>
+<xs:element name="etudiant" type="tns:Etudiant" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerEtudiants">
+<xs:sequence>
+<xs:element name="filiere" type="xs:string" minOccurs="0"/>
+<xs:element name="statut" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerEtudiantsResponse">
+<xs:sequence>
+<xs:element name="etudiant" type="tns:Etudiant" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+</xs:schema>

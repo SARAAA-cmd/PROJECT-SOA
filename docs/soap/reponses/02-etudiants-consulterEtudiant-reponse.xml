@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:consulterEtudiantResponse xmlns:ns2="http://stages.universite.com/etudiants" xmlns:ns3="http://stages.universite.com/commun">
+      <etudiant>
+        <matricule>E2026001</matricule>
+        <nom>Benali</nom>
+        <prenom>Yasmine</prenom>
+        <email>yasmine.benali@etu.universite.example</email>
+        <telephone>+212 6 00 00 00 01</telephone>
+        <adresse>Cité universitaire</adresse>
+        <filiere>AMOA</filiere>
+        <niveau>M1</niveau>
+        <competences>BPMN, UML, SQL, Java, Gestion de projet</competences>
+        <statut>ACTIF</statut>
+        <dateInscription>2024-09-15</dateInscription>
+      </etudiant>
+    </ns2:consulterEtudiantResponse>
+  </S:Body>
+</S:Envelope>

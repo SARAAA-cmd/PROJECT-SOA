@@ -1,0 +1,27 @@
+\chapter{Bilan et perspectives}\label{chap:conclusion}
+
+\section{Bilan}
+Le projet livre une plateforme complète et opérationnelle : six services autonomes aux contrats explicites,
+trois en SOAP décrits par WSDL et trois en REST, orchestrés par un processus BPMN 2.0 réellement exécuté.
+Le processus couvre les neuf étapes demandées et va au-delà sur trois points : demande de complément d'information,
+relance automatique de l'entreprise et interruption sur annulation. La gestion des erreurs combine reprise
+automatique, événements d'erreur BPMN et traitement humain des incidents, avec des reprises idempotentes.
+L'ensemble est vérifié par 28 tests d'intégration de bout en bout, sur H2 et PostgreSQL, et peut être utilisé par
+chaque acteur à travers l'interface web.
+
+\section{Limites}
+\begin{itemize}
+  \item Les six services partagent un processus et une base physique pour simplifier la démonstration ; l'isolation
+        est logique (tables, contrats, appels réseau), pas physique.
+  \item Le transport n'est pas chiffré dans l'environnement de démonstration (HTTPS à activer en production).
+\end{itemize}
+
+\section{Perspectives}
+\begin{itemize}
+  \item Déployer chaque service dans son propre conteneur avec sa base (Docker Compose ou Kubernetes) et un annuaire
+        de services ou une passerelle d'API.
+  \item Remplacer HTTP Basic par des jetons OAuth 2 / JWT, et signer les messages SOAP (WS-Security \emph{Signature}).
+  \item Ajouter un disjoncteur (\emph{circuit breaker}) et une file de messages pour les notifications.
+  \item Remplacer Mailpit par le serveur SMTP de l'école et ajouter des notifications instantanées dans l'application.
+  \item Enrichir la compatibilité par une recommandation d'offres fondée sur l'historique des stages.
+\end{itemize}

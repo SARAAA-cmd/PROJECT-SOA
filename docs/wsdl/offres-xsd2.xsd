@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?><!-- Published by XML-WS Runtime (https://github.com/eclipse-ee4j/metro-jax-ws). Runtime's version is XML-WS Runtime 4.0.3 git-revision#a57c222. --><xs:schema xmlns:tns="http://stages.universite.com/commun" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" targetNamespace="http://stages.universite.com/commun">
+
+<xs:element name="ServiceFault" nillable="true" type="tns:ServiceFault"/>
+
+<xs:complexType name="ServiceFault">
+<xs:sequence>
+<xs:element name="code" type="xs:string"/>
+<xs:element name="message" type="xs:string"/>
+<xs:element name="detail" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+</xs:schema>

@@ -1,0 +1,55 @@
+\chapter{Règles de gestion}\label{chap:regles}
+
+Les règles ci-dessous sont implémentées dans les services indiqués ; la colonne « Test » renvoie aux scénarios
+automatisés du chapitre~\ref{chap:tests} qui les vérifient.
+
+\begin{longtable}{@{}lp{8.3cm}>{\raggedright\arraybackslash}p{2.6cm}l@{}}
+\caption{Règles de gestion}\label{tab:regles}\\
+\toprule
+\textbf{N°} & \textbf{Règle} & \textbf{Service} & \textbf{Test} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{N°} & \textbf{Règle} & \textbf{Service} & \textbf{Test} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\multicolumn{4}{@{}l}{\textit{Étudiants}}\\
+RG-01 & Le matricule est unique et respecte le format \code{[A-Z]\{1,3\}[0-9]\{4,10\}}. & Étudiants & ST-04, ST-05 \\
+RG-02 & L'adresse e-mail d'un étudiant est unique (insensible à la casse). & Étudiants & — \\
+RG-03 & Un étudiant créé sans statut est \code{ACTIF}. & Étudiants & ST-03 \\
+RG-04 & Seul un étudiant \code{ACTIF} est éligible aux candidatures (un étudiant suspendu, en stage ou diplômé ne l'est pas). & Étudiants, BPMN & ST-07, PT-02 \\
+RG-05 & Un étudiant en stage ne peut pas être supprimé. & Étudiants & — \\
+RG-06 & Un étudiant ne consulte que sa propre fiche et ne modifie aucune donnée de référence. & Étudiants & ST-06 \\
+RG-32 & Une entreprise ne voit pas les coordonnées personnelles d'un candidat (téléphone et e-mail masqués, adresse non transmise). & Étudiants & ST-12 \\
+\multicolumn{4}{@{}l}{\textit{Entreprises et offres}}\\
+RG-07 & La raison sociale d'une entreprise est unique ; la date de référencement est fixée à l'activation du référencement. & Entreprises & ST-08 \\
+RG-08 & Une entreprise ayant des offres actives ne peut pas être supprimée. & Entreprises & ST-08 \\
+RG-09 & Seule une entreprise référencée peut publier une offre. & Offres & ST-09 \\
+RG-10 & Une entreprise ne gère que ses propres offres et ne modifie pas son référencement. & Offres, Entreprises & ST-09 \\
+RG-11 & À la création, la date limite est future, la durée comprise entre 1 et 12 mois, le nombre de places positif ; l'offre est \code{ACTIVE} et toutes ses places sont disponibles. & Offres & ST-09 \\
+RG-12 & Le nombre de places d'une offre ne peut descendre sous le nombre de places déjà attribuées. & Offres & — \\
+RG-13 & Une offre dont des stagiaires ont été retenus ne peut être supprimée (seulement clôturée). & Offres & — \\
+RG-14 & Une offre est disponible si elle est active, que sa date limite n'est pas dépassée et qu'il reste au moins une place. & Offres & ST-11 \\
+RG-15 & Compatibilité : la filière de l'étudiant doit être ciblée (liste vide = toutes), son niveau au moins égal au niveau minimum et la date limite non dépassée ; le score de compétences est indicatif. & Offres & ST-10 \\
+RG-16 & L'acceptation d'une candidature réserve une place ; à zéro place, l'offre passe à \code{POURVUE}. La réservation ne peut pas rendre le compteur négatif. & Offres, BPMN & PT-01 \\
+\multicolumn{4}{@{}l}{\textit{Candidatures}}\\
+RG-17 & Un étudiant ne peut avoir qu'une candidature non annulée par offre. & Candidatures, BPMN & RT-02, PT-02 \\
+RG-18 & Une candidature n'est enregistrée que si toutes les vérifications du processus sont satisfaites ; sinon l'étudiant reçoit un rejet motivé. & BPMN & PT-02 \\
+RG-19 & Les transitions de statut suivent l'automate de la figure~\ref{fig:automate} ; tout changement est historisé (auteur, date, motif). & Candidatures & RT-03 \\
+RG-20 & Une candidature ne peut être annulée que tant qu'elle est \code{DEPOSEE} (l'entreprise ne l'a pas encore prise en charge), par l'étudiant concerné ou le responsable ; l'annulation interrompt le processus. & Candidatures, BPMN & RT-03, PT-07, PT-09 \\
+RG-31 & Un étudiant ne peut avoir plus de 5 candidatures en cours (déposées ou en évaluation) ; au-delà, la candidature est rejetée. & Candidatures, BPMN & PT-10 \\
+RG-21 & La décision sur une candidature orchestrée passe obligatoirement par la tâche « Évaluer » du processus. & Candidatures & — \\
+RG-22 & Seule l'entreprise qui a publié l'offre (ou le responsable) peut rendre la décision. & Processus & PT-01 \\
+RG-23 & Une demande de complément exige un commentaire, transmis à l'étudiant ; celui-ci peut alors compléter son dossier. & Processus & PT-03 \\
+\multicolumn{4}{@{}l}{\textit{Notifications}}\\
+RG-24 & L'étudiant est notifié par e-mail du dépôt, du rejet, d'une demande de complément, de la décision et d'un éventuel abandon ; l'entreprise de la réception et des relances. & Notifications, BPMN & PT-01, PT-03 \\
+RG-25 & Sans décision après le délai fixé (3 jours par défaut), l'entreprise est relancée sans que l'évaluation soit annulée. & BPMN & PT-08 \\
+RG-26 & Les étudiants actifs au profil compatible reçoivent un rappel unique par offre clôturant dans les 3 jours. & Notifications & — \\
+RG-27 & Une notification non envoyée ne bloque jamais le processus ; l'incident est consigné. & BPMN & PT-06 \\
+\multicolumn{4}{@{}l}{\textit{Stages}}\\
+RG-28 & Un seul stage par candidature acceptée ; la date de fin est postérieure à la date de début ; le stage est \code{PLANIFIE} si son début est futur, \code{EN\_COURS} sinon. & Stages & RT-05 \\
+RG-29 & Les comptes rendus ne sont acceptés que pour un stage planifié ou en cours ; la note d'une évaluation est comprise entre 0 et 20 et il n'y a qu'une évaluation finale. & Stages & RT-05 \\
+RG-30 & L'évaluation finale clôture le stage ; à la fin ou à l'interruption du stage, l'étudiant redevient \code{ACTIF}. & Stages & RT-05 \\
+\end{longtable}

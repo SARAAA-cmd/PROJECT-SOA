@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://stages.universite.com/processus">
+
+  <!-- Généré par tools/generer_bpmn.py : ne pas éditer à la main -->
+  <error id="ErreurTechnique" name="Service indisponible" errorCode="ERREUR_TECHNIQUE"/>
+
+  <collaboration id="Collaboration">
+    <participant id="Participant_Plateforme" name="Plateforme de gestion des stages" processRef="traitementCandidature"/>
+  </collaboration>
+
+  <process id="traitementCandidature" name="Traitement d'une candidature de stage" isExecutable="true">
+    <documentation>Orchestration du traitement d'une candidature, du dépôt à la décision finale.</documentation>
+    <laneSet id="LaneSet_1">
+      <lane id="laneEtudiant" name="Étudiant">
+        <flowNodeRef>debut</flowNodeRef>
+        <flowNodeRef>notifierRejet</flowNodeRef>
+        <flowNodeRef>finRejet</flowNodeRef>
+        <flowNodeRef>notifierComplement</flowNodeRef>
+        <flowNodeRef>finTraitee</flowNodeRef>
+      </lane>
+      <lane id="laneOrchestrateur" name="Orchestrateur SOA (services SOAP / REST)">
+        <flowNodeRef>receptionner</flowNodeRef>
+        <flowNodeRef>spVerifications</flowNodeRef>
+        <flowNodeRef>errA</flowNodeRef>
+        <flowNodeRef>gwRecevable</flowNodeRef>
+        <flowNodeRef>spEnregistrement</flowNodeRef>
+        <flowNodeRef>errB</flowNodeRef>
+        <flowNodeRef>spFinalisation</flowNodeRef>
+        <flowNodeRef>errC</flowNodeRef>
+      </lane>
+      <lane id="laneEntreprise" name="Entreprise partenaire">
+        <flowNodeRef>evaluer</flowNodeRef>
+        <flowNodeRef>timerRelance</flowNodeRef>
+        <flowNodeRef>relancerEntreprise</flowNodeRef>
+        <flowNodeRef>finRelance</flowNodeRef>
+        <flowNodeRef>gwDecision</flowNodeRef>
+      </lane>
+      <lane id="laneResponsable" name="Responsable des stages">
+        <flowNodeRef>journaliser</flowNodeRef>
+        <flowNodeRef>traiterIncident</flowNodeRef>
+        <flowNodeRef>gwIncident</flowNodeRef>
+        <flowNodeRef>notifierIncident</flowNodeRef>
+        <flowNodeRef>finAbandon</flowNodeRef>
+      </lane>
+    </laneSet>
+    <startEvent id="debut" name="Candidature soumise"/>
+    <serviceTask id="receptionner" name="1. Réceptionner la candidature" flowable:class="com.universite.stages.bpmn.delegates.ReceptionnerCandidatureDelegate">
+      <documentation>Contrôle de forme des données saisies et initialisation du contexte du processus.</documentation>
+    </serviceTask>
+    <subProcess id="spVerifications" name="Vérifications de recevabilité">
+      <extensionElements>
+        <flowable:executionListener event="start" expression="${execution.setVariable('etapeCourante', 'VERIFICATIONS')}"/>
+      </extensionElements>
+      <startEvent id="debutA" name=""/>
+      <serviceTask id="verifierEtudiant" name="2. Vérifier l'étudiant [SOAP Étudiants]" flowable:class="com.universite.stages.bpmn.delegates.VerifierEtudiantDelegate">
+        <documentation>verifierEtudiant + consulterEtudiant</documentation>
+      </serviceTask>
+      <exclusiveGateway id="gwEligible" name="Étudiant éligible ?" default="fNonEligible"/>
+      <serviceTask id="verifierOffre" name="3. Vérifier l'offre et l'entreprise [SOAP Offres / Entreprises]" flowable:class="com.universite.stages.bpmn.delegates.VerifierOffreDelegate">
+        <documentation>consulterOffre, verifierEntreprise, consulterEntreprise, verifierCompatibilite</documentation>
+      </serviceTask>
+      <serviceTask id="controler" name="4. Contrôler la candidature [SOAP Offres / REST Candidatures]" flowable:class="com.universite.stages.bpmn.delegates.ControlerCandidatureDelegate">
+        <documentation>Date limite, places disponibles, absence de doublon</documentation>
+      </serviceTask>
+      <endEvent id="finA" name="Vérifications terminées"/>
+      <endEvent id="finNonEligible" name="Étudiant non éligible"/>
+      <sequenceFlow id="fA1" sourceRef="debutA" targetRef="verifierEtudiant"/>
+      <sequenceFlow id="fA2" sourceRef="verifierEtudiant" targetRef="gwEligible"/>
+      <sequenceFlow id="fEligible" name="oui" sourceRef="gwEligible" targetRef="verifierOffre">
+        <conditionExpression xsi:type="tFormalExpression"><![CDATA[${etudiantEligible}]]></conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="fNonEligible" name="non" sourceRef="gwEligible" targetRef="finNonEligible"/>
+      <sequenceFlow id="fA3" sourceRef="verifierOffre" targetRef="controler"/>
+      <sequenceFlow id="fA4" sourceRef="controler" targetRef="finA"/>
+    </subProcess>
+    <boundaryEvent id="errA" name="Service indisponible" attachedToRef="spVerifications">
+      <errorEventDefinition errorRef="ErreurTechnique"/>
+    </boundaryEvent>
+    <exclusiveGateway id="gwRecevable" name="5. Conditions satisfaites ?" default="fNonRecevable"/>
+    <serviceTask id="notifierRejet" name="Notifier le rejet à l'étudiant [REST Notifications]" flowable:class="com.universite.stages.bpmn.delegates.NotifierDelegate">
+      <extensionElements>
+        <flowable:field name="type" stringValue="REJET_CANDIDATURE"/>
+        <flowable:field name="destinataire" stringValue="ETUDIANT"/>
+      </extensionElements>
+    </serviceTask>
+    <endEvent id="finRejet" name="Candidature rejetée"/>
+    <subProcess id="spEnregistrement" name="Enregistrement et transmission">
+      <extensionElements>
+        <flowable:executionListener event="start" expression="${execution.setVariable('etapeCourante', 'ENREGISTREMENT')}"/>
+      </extensionElements>
+      <startEvent id="debutB" name=""/>
+      <serviceTask id="enregistrer" name="Enregistrer la candidature [REST Candidatures]" flowable:class="com.universite.stages.bpmn.delegates.EnregistrerCandidatureDelegate">
+        <documentation>POST /api/candidatures</documentation>
+      </serviceTask>
+      <serviceTask id="notifierConfirmation" name="Confirmer le dépôt à l'étudiant [REST Notifications]" flowable:class="com.universite.stages.bpmn.delegates.NotifierDelegate">
+        <extensionElements>
+          <flowable:field name="type" stringValue="CONFIRMATION_DEPOT"/>
+          <flowable:field name="destinataire" stringValue="ETUDIANT"/>
+        </extensionElements>
+      </serviceTask>
+      <serviceTask id="notifierEntreprise" name="6. Transmettre à l'entreprise [REST Notifications]" flowable:class="com.universite.stages.bpmn.delegates.NotifierDelegate">
+        <extensionElements>
+          <flowable:field name="type" stringValue="RECEPTION_CANDIDATURE"/>
+          <flowable:field name="destinataire" stringValue="ENTREPRISE"/>
+        </extensionElements>
+      </serviceTask>
+      <endEvent id="finB" name=""/>
+      <sequenceFlow id="fB1" sourceRef="debutB" targetRef="enregistrer"/>
+      <sequenceFlow id="fB2" sourceRef="enregistrer" targetRef="notifierConfirmation"/>
+      <sequenceFlow id="fB3" sourceRef="notifierConfirmation" targetRef="notifierEntreprise"/>
+      <sequenceFlow id="fB4" sourceRef="notifierEntreprise" targetRef="finB"/>
+    </subProcess>
+    <boundaryEvent id="errB" name="Service indisponible" attachedToRef="spEnregistrement">
+      <errorEventDefinition errorRef="ErreurTechnique"/>
+    </boundaryEvent>
+    <userTask id="evaluer" name="7. Examiner et évaluer la candidature" flowable:candidateGroups="entreprise">
+      <extensionElements>
+        <flowable:formProperty id="decision" name="Décision" type="enum" required="true">
+          <flowable:value id="ACCEPTEE" name="Accepter"/>
+          <flowable:value id="REFUSEE" name="Refuser"/>
+          <flowable:value id="COMPLEMENT" name="Demander un complément"/>
+        </flowable:formProperty>
+        <flowable:formProperty id="commentaireDecision" name="Commentaire" type="string"/>
+        <flowable:formProperty id="dateDebut" name="Date de début" type="string"/>
+        <flowable:formProperty id="dateFin" name="Date de fin" type="string"/>
+        <flowable:formProperty id="tuteur" name="Tuteur entreprise" type="string"/>
+      </extensionElements>
+    </userTask>
+    <boundaryEvent id="timerRelance" name="Délai de décision dépassé" attachedToRef="evaluer" cancelActivity="false">
+      <timerEventDefinition><timeDuration>${delaiRelance}</timeDuration></timerEventDefinition>
+    </boundaryEvent>
+    <serviceTask id="relancerEntreprise" name="Relancer l'entreprise [REST Notifications]" flowable:class="com.universite.stages.bpmn.delegates.NotifierDelegate">
+      <extensionElements>
+        <flowable:field name="type" stringValue="RELANCE_DECISION"/>
+        <flowable:field name="destinataire" stringValue="ENTREPRISE"/>
+      </extensionElements>
+    </serviceTask>
+    <endEvent id="finRelance" name="Relance envoyée"/>
+    <exclusiveGateway id="gwDecision" name="Décision ?" default="fDecisionFinale"/>
+    <serviceTask id="notifierComplement" name="Demander un complément [REST Notifications]" flowable:class="com.universite.stages.bpmn.delegates.NotifierDelegate">
+      <extensionElements>
+        <flowable:field name="type" stringValue="DEMANDE_COMPLEMENT"/>
+        <flowable:field name="destinataire" stringValue="ETUDIANT"/>
+      </extensionElements>
+    </serviceTask>
+    <subProcess id="spFinalisation" name="Finalisation de la décision">
+      <extensionElements>
+        <flowable:executionListener event="start" expression="${execution.setVariable('etapeCourante', 'FINALISATION')}"/>
+      </extensionElements>
+      <startEvent id="debutC" name=""/>
+      <serviceTask id="majDecision" name="Enregistrer la décision [REST Candidatures]" flowable:class="com.universite.stages.bpmn.delegates.MajStatutCandidatureDelegate">
+        <extensionElements>
+          <flowable:field name="statut" expression="${decision}"/>
+        </extensionElements>
+      </serviceTask>
+      <serviceTask id="notifierResultat" name="8. Notifier le résultat à l'étudiant [REST Notifications]" flowable:class="com.universite.stages.bpmn.delegates.NotifierDelegate">
+        <extensionElements>
+          <flowable:field name="type" expression="${decision == 'ACCEPTEE' ? 'ACCEPTATION' : 'REFUS'}"/>
+          <flowable:field name="destinataire" stringValue="ETUDIANT"/>
+        </extensionElements>
+      </serviceTask>
+      <exclusiveGateway id="gwAcceptee" name="Acceptée ?" default="fRefusee"/>
+      <serviceTask id="creerStage" name="9. Créer le dossier de stage [REST Suivi des stages]" flowable:class="com.universite.stages.bpmn.delegates.CreerDossierStageDelegate">
+        <documentation>POST /api/stages</documentation>
+      </serviceTask>
+      <serviceTask id="majEtudiant" name="Statut étudiant EN_STAGE + réservation de place [SOAP]" flowable:class="com.universite.stages.bpmn.delegates.MajEtudiantEtOffreDelegate">
+        <documentation>changerStatutEtudiant + reserverPlace</documentation>
+      </serviceTask>
+      <endEvent id="finAcceptee" name="Stage créé"/>
+      <endEvent id="finRefusee" name="Refus notifié"/>
+      <sequenceFlow id="fC1" sourceRef="debutC" targetRef="majDecision"/>
+      <sequenceFlow id="fC2" sourceRef="majDecision" targetRef="notifierResultat"/>
+      <sequenceFlow id="fC3" sourceRef="notifierResultat" targetRef="gwAcceptee"/>
+      <sequenceFlow id="fAcceptee" name="oui" sourceRef="gwAcceptee" targetRef="creerStage">
+        <conditionExpression xsi:type="tFormalExpression"><![CDATA[${decision == 'ACCEPTEE'}]]></conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="fRefusee" name="non" sourceRef="gwAcceptee" targetRef="finRefusee"/>
+      <sequenceFlow id="fC4" sourceRef="creerStage" targetRef="majEtudiant"/>
+      <sequenceFlow id="fC5" sourceRef="majEtudiant" targetRef="finAcceptee"/>
+    </subProcess>
+    <boundaryEvent id="errC" name="Service indisponible" attachedToRef="spFinalisation">
+      <errorEventDefinition errorRef="ErreurTechnique"/>
+    </boundaryEvent>
+    <endEvent id="finTraitee" name="Candidature traitée"/>
+    <serviceTask id="journaliser" name="Journaliser l'incident technique" flowable:class="com.universite.stages.bpmn.delegates.JournaliserIncidentDelegate">
+    </serviceTask>
+    <userTask id="traiterIncident" name="Traiter l'incident (relancer / abandonner)" flowable:candidateGroups="responsable">
+      <extensionElements>
+        <flowable:formProperty id="actionIncident" name="Action" type="enum" required="true">
+          <flowable:value id="RELANCER" name="Relancer l'étape"/>
+          <flowable:value id="ABANDONNER" name="Abandonner le traitement"/>
+        </flowable:formProperty>
+      </extensionElements>
+    </userTask>
+    <exclusiveGateway id="gwIncident" name="Action ?" default="fAbandon"/>
+    <serviceTask id="notifierIncident" name="Informer l'étudiant de l'abandon [REST Notifications]" flowable:class="com.universite.stages.bpmn.delegates.NotifierDelegate">
+      <extensionElements>
+        <flowable:field name="type" stringValue="INCIDENT_TRAITEMENT"/>
+        <flowable:field name="destinataire" stringValue="ETUDIANT"/>
+      </extensionElements>
+    </serviceTask>
+    <endEvent id="finAbandon" name="Traitement abandonné"/>
+    <sequenceFlow id="f1" sourceRef="debut" targetRef="receptionner"/>
+    <sequenceFlow id="f2" sourceRef="receptionner" targetRef="spVerifications"/>
+    <sequenceFlow id="f3" sourceRef="spVerifications" targetRef="gwRecevable"/>
+    <sequenceFlow id="fRecevable" name="oui" sourceRef="gwRecevable" targetRef="spEnregistrement">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${recevable}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="fNonRecevable" name="non" sourceRef="gwRecevable" targetRef="notifierRejet"/>
+    <sequenceFlow id="fRejet" sourceRef="notifierRejet" targetRef="finRejet"/>
+    <sequenceFlow id="f4" sourceRef="spEnregistrement" targetRef="evaluer"/>
+    <sequenceFlow id="f5" sourceRef="evaluer" targetRef="gwDecision"/>
+    <sequenceFlow id="fComplement" name="complément" sourceRef="gwDecision" targetRef="notifierComplement">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${decision == 'COMPLEMENT'}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="fRetourEvaluation" sourceRef="notifierComplement" targetRef="evaluer"/>
+    <sequenceFlow id="fDecisionFinale" name="acceptée / refusée" sourceRef="gwDecision" targetRef="spFinalisation"/>
+    <sequenceFlow id="fTimer" sourceRef="timerRelance" targetRef="relancerEntreprise"/>
+    <sequenceFlow id="fRelance" sourceRef="relancerEntreprise" targetRef="finRelance"/>
+    <sequenceFlow id="f6" sourceRef="spFinalisation" targetRef="finTraitee"/>
+    <sequenceFlow id="fErrA" sourceRef="errA" targetRef="journaliser"/>
+    <sequenceFlow id="fErrB" sourceRef="errB" targetRef="journaliser"/>
+    <sequenceFlow id="fErrC" sourceRef="errC" targetRef="journaliser"/>
+    <sequenceFlow id="f7" sourceRef="journaliser" targetRef="traiterIncident"/>
+    <sequenceFlow id="f8" sourceRef="traiterIncident" targetRef="gwIncident"/>
+    <sequenceFlow id="fRelancerA" name="relancer (vérifications)" sourceRef="gwIncident" targetRef="spVerifications">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${actionIncident == 'RELANCER' && etapeCourante == 'VERIFICATIONS'}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="fRelancerB" name="relancer (enregistrement)" sourceRef="gwIncident" targetRef="spEnregistrement">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${actionIncident == 'RELANCER' && etapeCourante == 'ENREGISTREMENT'}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="fRelancerC" name="relancer (finalisation)" sourceRef="gwIncident" targetRef="spFinalisation">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${actionIncident == 'RELANCER' && etapeCourante == 'FINALISATION'}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="fAbandon" name="abandonner" sourceRef="gwIncident" targetRef="notifierIncident"/>
+    <sequenceFlow id="f9" sourceRef="notifierIncident" targetRef="finAbandon"/>
+  </process>
+
+  <bpmndi:BPMNDiagram id="Diagramme">
+    <bpmndi:BPMNPlane id="Plan" bpmnElement="Collaboration">
+      <bpmndi:BPMNShape id="Participant_Plateforme_di" bpmnElement="Participant_Plateforme" isHorizontal="true">
+        <omgdc:Bounds x="40" y="40" width="3260" height="970"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="laneEtudiant_di" bpmnElement="laneEtudiant" isHorizontal="true">
+        <omgdc:Bounds x="70" y="40" width="3230" height="140"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="laneOrchestrateur_di" bpmnElement="laneOrchestrateur" isHorizontal="true">
+        <omgdc:Bounds x="70" y="180" width="3230" height="400"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="laneEntreprise_di" bpmnElement="laneEntreprise" isHorizontal="true">
+        <omgdc:Bounds x="70" y="580" width="3230" height="230"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="laneResponsable_di" bpmnElement="laneResponsable" isHorizontal="true">
+        <omgdc:Bounds x="70" y="810" width="3230" height="200"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="debut_di" bpmnElement="debut">
+        <omgdc:Bounds x="110" y="92" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="73" y="132" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="receptionner_di" bpmnElement="receptionner">
+        <omgdc:Bounds x="170" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="spVerifications_di" bpmnElement="spVerifications" isExpanded="true">
+        <omgdc:Bounds x="350" y="220" width="870" height="300"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="debutA_di" bpmnElement="debutA">
+        <omgdc:Bounds x="380" y="362" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="verifierEtudiant_di" bpmnElement="verifierEtudiant">
+        <omgdc:Bounds x="450" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gwEligible_di" bpmnElement="gwEligible" isMarkerVisible="true">
+        <omgdc:Bounds x="630" y="355" width="50" height="50"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="600" y="325" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="verifierOffre_di" bpmnElement="verifierOffre">
+        <omgdc:Bounds x="730" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="controler_di" bpmnElement="controler">
+        <omgdc:Bounds x="910" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finA_di" bpmnElement="finA">
+        <omgdc:Bounds x="1120" y="362" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1083" y="402" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finNonEligible_di" bpmnElement="finNonEligible">
+        <omgdc:Bounds x="637" y="442" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="600" y="482" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="errA_di" bpmnElement="errA">
+        <omgdc:Bounds x="1160" y="502" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1200" y="514" width="80" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gwRecevable_di" bpmnElement="gwRecevable" isMarkerVisible="true">
+        <omgdc:Bounds x="1270" y="355" width="50" height="50"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1240" y="325" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifierRejet_di" bpmnElement="notifierRejet">
+        <omgdc:Bounds x="1230" y="70" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finRejet_di" bpmnElement="finRejet">
+        <omgdc:Bounds x="1420" y="92" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1383" y="132" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="spEnregistrement_di" bpmnElement="spEnregistrement" isExpanded="true">
+        <omgdc:Bounds x="1360" y="220" width="640" height="300"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="debutB_di" bpmnElement="debutB">
+        <omgdc:Bounds x="1385" y="362" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="enregistrer_di" bpmnElement="enregistrer">
+        <omgdc:Bounds x="1450" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifierConfirmation_di" bpmnElement="notifierConfirmation">
+        <omgdc:Bounds x="1620" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifierEntreprise_di" bpmnElement="notifierEntreprise">
+        <omgdc:Bounds x="1790" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finB_di" bpmnElement="finB">
+        <omgdc:Bounds x="1950" y="362" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="errB_di" bpmnElement="errB">
+        <omgdc:Bounds x="1940" y="502" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1980" y="514" width="80" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="evaluer_di" bpmnElement="evaluer">
+        <omgdc:Bounds x="2200" y="635" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="timerRelance_di" bpmnElement="timerRelance">
+        <omgdc:Bounds x="2250" y="697" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2135" y="711" width="105" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="relancerEntreprise_di" bpmnElement="relancerEntreprise">
+        <omgdc:Bounds x="2330" y="720" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finRelance_di" bpmnElement="finRelance">
+        <omgdc:Bounds x="2520" y="742" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2483" y="782" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gwDecision_di" bpmnElement="gwDecision" isMarkerVisible="true">
+        <omgdc:Bounds x="2400" y="650" width="50" height="50"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2370" y="620" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifierComplement_di" bpmnElement="notifierComplement">
+        <omgdc:Bounds x="2190" y="70" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="spFinalisation_di" bpmnElement="spFinalisation" isExpanded="true">
+        <omgdc:Bounds x="2500" y="220" width="700" height="300"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="debutC_di" bpmnElement="debutC">
+        <omgdc:Bounds x="2520" y="362" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="majDecision_di" bpmnElement="majDecision">
+        <omgdc:Bounds x="2580" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifierResultat_di" bpmnElement="notifierResultat">
+        <omgdc:Bounds x="2740" y="340" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gwAcceptee_di" bpmnElement="gwAcceptee" isMarkerVisible="true">
+        <omgdc:Bounds x="2905" y="355" width="50" height="50"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2875" y="325" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="creerStage_di" bpmnElement="creerStage">
+        <omgdc:Bounds x="2990" y="240" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="majEtudiant_di" bpmnElement="majEtudiant">
+        <omgdc:Bounds x="2990" y="380" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finAcceptee_di" bpmnElement="finAcceptee">
+        <omgdc:Bounds x="3150" y="402" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="3113" y="442" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finRefusee_di" bpmnElement="finRefusee">
+        <omgdc:Bounds x="2912" y="462" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2875" y="502" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="errC_di" bpmnElement="errC">
+        <omgdc:Bounds x="3140" y="502" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="3180" y="514" width="80" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finTraitee_di" bpmnElement="finTraitee">
+        <omgdc:Bounds x="3080" y="92" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="3043" y="132" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="journaliser_di" bpmnElement="journaliser">
+        <omgdc:Bounds x="1150" y="880" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="traiterIncident_di" bpmnElement="traiterIncident">
+        <omgdc:Bounds x="1350" y="880" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gwIncident_di" bpmnElement="gwIncident" isMarkerVisible="true">
+        <omgdc:Bounds x="1550" y="895" width="50" height="50"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1520" y="865" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notifierIncident_di" bpmnElement="notifierIncident">
+        <omgdc:Bounds x="1740" y="880" width="130" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="finAbandon_di" bpmnElement="finAbandon">
+        <omgdc:Bounds x="1940" y="902" width="36" height="36"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1903" y="942" width="110" height="27"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="fA1_di" bpmnElement="fA1">
+        <omgdi:waypoint x="416" y="380"/>
+        <omgdi:waypoint x="450" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fA2_di" bpmnElement="fA2">
+        <omgdi:waypoint x="580" y="380"/>
+        <omgdi:waypoint x="630" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fEligible_di" bpmnElement="fEligible">
+        <omgdi:waypoint x="680" y="380"/>
+        <omgdi:waypoint x="730" y="380"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="709" y="362" width="28" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fNonEligible_di" bpmnElement="fNonEligible">
+        <omgdi:waypoint x="655" y="405"/>
+        <omgdi:waypoint x="655" y="442"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="661" y="416" width="28" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fA3_di" bpmnElement="fA3">
+        <omgdi:waypoint x="860" y="380"/>
+        <omgdi:waypoint x="910" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fA4_di" bpmnElement="fA4">
+        <omgdi:waypoint x="1040" y="380"/>
+        <omgdi:waypoint x="1120" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fB1_di" bpmnElement="fB1">
+        <omgdi:waypoint x="1421" y="380"/>
+        <omgdi:waypoint x="1450" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fB2_di" bpmnElement="fB2">
+        <omgdi:waypoint x="1580" y="380"/>
+        <omgdi:waypoint x="1620" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fB3_di" bpmnElement="fB3">
+        <omgdi:waypoint x="1750" y="380"/>
+        <omgdi:waypoint x="1790" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fB4_di" bpmnElement="fB4">
+        <omgdi:waypoint x="1920" y="380"/>
+        <omgdi:waypoint x="1950" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fC1_di" bpmnElement="fC1">
+        <omgdi:waypoint x="2556" y="380"/>
+        <omgdi:waypoint x="2580" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fC2_di" bpmnElement="fC2">
+        <omgdi:waypoint x="2710" y="380"/>
+        <omgdi:waypoint x="2740" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fC3_di" bpmnElement="fC3">
+        <omgdi:waypoint x="2870" y="380"/>
+        <omgdi:waypoint x="2905" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fAcceptee_di" bpmnElement="fAcceptee">
+        <omgdi:waypoint x="2930" y="355"/>
+        <omgdi:waypoint x="2930" y="280"/>
+        <omgdi:waypoint x="2990" y="280"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2936" y="310" width="28" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRefusee_di" bpmnElement="fRefusee">
+        <omgdi:waypoint x="2930" y="405"/>
+        <omgdi:waypoint x="2930" y="462"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2936" y="426" width="28" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fC4_di" bpmnElement="fC4">
+        <omgdi:waypoint x="3055" y="320"/>
+        <omgdi:waypoint x="3055" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fC5_di" bpmnElement="fC5">
+        <omgdi:waypoint x="3120" y="420"/>
+        <omgdi:waypoint x="3150" y="420"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1">
+        <omgdi:waypoint x="128" y="128"/>
+        <omgdi:waypoint x="128" y="380"/>
+        <omgdi:waypoint x="170" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2">
+        <omgdi:waypoint x="300" y="380"/>
+        <omgdi:waypoint x="325" y="380"/>
+        <omgdi:waypoint x="325" y="370"/>
+        <omgdi:waypoint x="350" y="370"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3">
+        <omgdi:waypoint x="1220" y="370"/>
+        <omgdi:waypoint x="1245" y="370"/>
+        <omgdi:waypoint x="1245" y="380"/>
+        <omgdi:waypoint x="1270" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRecevable_di" bpmnElement="fRecevable">
+        <omgdi:waypoint x="1320" y="380"/>
+        <omgdi:waypoint x="1340" y="380"/>
+        <omgdi:waypoint x="1340" y="370"/>
+        <omgdi:waypoint x="1360" y="370"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1334" y="362" width="28" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fNonRecevable_di" bpmnElement="fNonRecevable">
+        <omgdi:waypoint x="1295" y="355"/>
+        <omgdi:waypoint x="1295" y="150"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1301" y="246" width="28" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRejet_di" bpmnElement="fRejet">
+        <omgdi:waypoint x="1360" y="110"/>
+        <omgdi:waypoint x="1420" y="110"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f4_di" bpmnElement="f4">
+        <omgdi:waypoint x="2000" y="370"/>
+        <omgdi:waypoint x="2265" y="370"/>
+        <omgdi:waypoint x="2265" y="635"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f5_di" bpmnElement="f5">
+        <omgdi:waypoint x="2330" y="675"/>
+        <omgdi:waypoint x="2400" y="675"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fComplement_di" bpmnElement="fComplement">
+        <omgdi:waypoint x="2425" y="650"/>
+        <omgdi:waypoint x="2425" y="110"/>
+        <omgdi:waypoint x="2320" y="110"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2431" y="373" width="70" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRetourEvaluation_di" bpmnElement="fRetourEvaluation">
+        <omgdi:waypoint x="2255" y="150"/>
+        <omgdi:waypoint x="2255" y="615"/>
+        <omgdi:waypoint x="2265" y="615"/>
+        <omgdi:waypoint x="2265" y="635"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fDecisionFinale_di" bpmnElement="fDecisionFinale">
+        <omgdi:waypoint x="2450" y="675"/>
+        <omgdi:waypoint x="2700" y="675"/>
+        <omgdi:waypoint x="2700" y="460"/>
+        <omgdi:waypoint x="2500" y="460"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="2579" y="657" width="118" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fTimer_di" bpmnElement="fTimer">
+        <omgdi:waypoint x="2268" y="733"/>
+        <omgdi:waypoint x="2268" y="760"/>
+        <omgdi:waypoint x="2330" y="760"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRelance_di" bpmnElement="fRelance">
+        <omgdi:waypoint x="2460" y="760"/>
+        <omgdi:waypoint x="2520" y="760"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f6_di" bpmnElement="f6">
+        <omgdi:waypoint x="2850" y="220"/>
+        <omgdi:waypoint x="2850" y="174"/>
+        <omgdi:waypoint x="3098" y="174"/>
+        <omgdi:waypoint x="3098" y="128"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fErrA_di" bpmnElement="fErrA">
+        <omgdi:waypoint x="1178" y="538"/>
+        <omgdi:waypoint x="1178" y="880"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fErrB_di" bpmnElement="fErrB">
+        <omgdi:waypoint x="1958" y="538"/>
+        <omgdi:waypoint x="1958" y="860"/>
+        <omgdi:waypoint x="1235" y="860"/>
+        <omgdi:waypoint x="1235" y="880"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fErrC_di" bpmnElement="fErrC">
+        <omgdi:waypoint x="3158" y="538"/>
+        <omgdi:waypoint x="3158" y="860"/>
+        <omgdi:waypoint x="1235" y="860"/>
+        <omgdi:waypoint x="1235" y="880"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f7_di" bpmnElement="f7">
+        <omgdi:waypoint x="1280" y="920"/>
+        <omgdi:waypoint x="1350" y="920"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f8_di" bpmnElement="f8">
+        <omgdi:waypoint x="1480" y="920"/>
+        <omgdi:waypoint x="1550" y="920"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRelancerA_di" bpmnElement="fRelancerA">
+        <omgdi:waypoint x="1575" y="895"/>
+        <omgdi:waypoint x="1575" y="560"/>
+        <omgdi:waypoint x="490" y="560"/>
+        <omgdi:waypoint x="490" y="520"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1583" y="544" width="154" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRelancerB_di" bpmnElement="fRelancerB">
+        <omgdi:waypoint x="1575" y="895"/>
+        <omgdi:waypoint x="1575" y="708"/>
+        <omgdi:waypoint x="1680" y="708"/>
+        <omgdi:waypoint x="1680" y="520"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1581" y="794" width="160" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fRelancerC_di" bpmnElement="fRelancerC">
+        <omgdi:waypoint x="1575" y="945"/>
+        <omgdi:waypoint x="1575" y="985"/>
+        <omgdi:waypoint x="2620" y="985"/>
+        <omgdi:waypoint x="2620" y="520"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1583" y="969" width="148" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="fAbandon_di" bpmnElement="fAbandon">
+        <omgdi:waypoint x="1600" y="920"/>
+        <omgdi:waypoint x="1740" y="920"/>
+        <bpmndi:BPMNLabel><omgdc:Bounds x="1674" y="902" width="70" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f9_di" bpmnElement="f9">
+        <omgdi:waypoint x="1870" y="920"/>
+        <omgdi:waypoint x="1940" y="920"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:verifierDisponibiliteResponse xmlns:ns2="http://stages.universite.com/offres" xmlns:ns3="http://stages.universite.com/commun">
+      <disponibilite>
+        <offreId>5</offreId>
+        <existe>true</existe>
+        <active>true</active>
+        <dateLimiteDepassee>true</dateLimiteDepassee>
+        <placesDisponibles>2</placesDisponibles>
+        <disponible>false</disponible>
+        <message>Date limite de candidature dépassée (2026-10-18)</message>
+      </disponibilite>
+    </ns2:verifierDisponibiliteResponse>
+  </S:Body>
+</S:Envelope>

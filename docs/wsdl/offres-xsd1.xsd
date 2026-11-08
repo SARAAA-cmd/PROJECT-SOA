@@ -1,0 +1,207 @@
+<?xml version='1.0' encoding='UTF-8'?><!-- Published by XML-WS Runtime (https://github.com/eclipse-ee4j/metro-jax-ws). Runtime's version is XML-WS Runtime 4.0.3 git-revision#a57c222. --><xs:schema xmlns:tns="http://stages.universite.com/offres" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" targetNamespace="http://stages.universite.com/offres">
+
+<xs:element name="consulterOffre" type="tns:consulterOffre"/>
+
+<xs:element name="consulterOffreResponse" type="tns:consulterOffreResponse"/>
+
+<xs:element name="creerOffre" type="tns:creerOffre"/>
+
+<xs:element name="creerOffreResponse" type="tns:creerOffreResponse"/>
+
+<xs:element name="listerOffres" type="tns:listerOffres"/>
+
+<xs:element name="listerOffresDisponibles" type="tns:listerOffresDisponibles"/>
+
+<xs:element name="listerOffresDisponiblesResponse" type="tns:listerOffresDisponiblesResponse"/>
+
+<xs:element name="listerOffresExpirantBientot" type="tns:listerOffresExpirantBientot"/>
+
+<xs:element name="listerOffresExpirantBientotResponse" type="tns:listerOffresExpirantBientotResponse"/>
+
+<xs:element name="listerOffresResponse" type="tns:listerOffresResponse"/>
+
+<xs:element name="modifierOffre" type="tns:modifierOffre"/>
+
+<xs:element name="modifierOffreResponse" type="tns:modifierOffreResponse"/>
+
+<xs:element name="reserverPlace" type="tns:reserverPlace"/>
+
+<xs:element name="reserverPlaceResponse" type="tns:reserverPlaceResponse"/>
+
+<xs:element name="supprimerOffre" type="tns:supprimerOffre"/>
+
+<xs:element name="supprimerOffreResponse" type="tns:supprimerOffreResponse"/>
+
+<xs:element name="verifierCompatibilite" type="tns:verifierCompatibilite"/>
+
+<xs:element name="verifierCompatibiliteResponse" type="tns:verifierCompatibiliteResponse"/>
+
+<xs:element name="verifierDisponibilite" type="tns:verifierDisponibilite"/>
+
+<xs:element name="verifierDisponibiliteResponse" type="tns:verifierDisponibiliteResponse"/>
+
+<xs:complexType name="consulterOffre">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterOffreResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Offre">
+<xs:sequence>
+<xs:element name="id" type="xs:long" minOccurs="0"/>
+<xs:element name="entrepriseId" type="xs:long"/>
+<xs:element name="titre" type="xs:string"/>
+<xs:element name="description" type="xs:string"/>
+<xs:element name="competencesRequises" type="xs:string" minOccurs="0"/>
+<xs:element name="dureeMois" type="xs:int"/>
+<xs:element name="dateLimite" type="xs:date"/>
+<xs:element name="nombrePlaces" type="xs:int"/>
+<xs:element name="placesDisponibles" type="xs:int"/>
+<xs:element name="filieresCiblees" type="xs:string" minOccurs="0"/>
+<xs:element name="niveauMinimum" type="xs:string" minOccurs="0"/>
+<xs:element name="lieu" type="xs:string" minOccurs="0"/>
+<xs:element name="statut" type="xs:string" minOccurs="0"/>
+<xs:element name="datePublication" type="xs:date" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerOffresDisponibles">
+<xs:sequence/>
+</xs:complexType>
+
+<xs:complexType name="listerOffresDisponiblesResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerOffresExpirantBientot">
+<xs:sequence>
+<xs:element name="jours" type="xs:int"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerOffresExpirantBientotResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerOffres">
+<xs:sequence>
+<xs:element name="statut" type="xs:string" minOccurs="0"/>
+<xs:element name="entrepriseId" type="xs:long" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerOffresResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="supprimerOffre">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="supprimerOffreResponse">
+<xs:sequence>
+<xs:element name="supprime" type="xs:boolean"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="modifierOffre">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="modifierOffreResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierDisponibilite">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierDisponibiliteResponse">
+<xs:sequence>
+<xs:element name="disponibilite" type="tns:DisponibiliteOffre" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="DisponibiliteOffre">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long" minOccurs="0"/>
+<xs:element name="existe" type="xs:boolean"/>
+<xs:element name="active" type="xs:boolean"/>
+<xs:element name="dateLimiteDepassee" type="xs:boolean"/>
+<xs:element name="placesDisponibles" type="xs:int"/>
+<xs:element name="disponible" type="xs:boolean"/>
+<xs:element name="message" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="reserverPlace">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="reserverPlaceResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="creerOffre">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="creerOffreResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierCompatibilite">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long"/>
+<xs:element name="filiere" type="xs:string" minOccurs="0"/>
+<xs:element name="niveau" type="xs:string" minOccurs="0"/>
+<xs:element name="competences" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierCompatibiliteResponse">
+<xs:sequence>
+<xs:element name="compatibilite" type="tns:Compatibilite" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Compatibilite">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long" minOccurs="0"/>
+<xs:element name="compatible" type="xs:boolean"/>
+<xs:element name="filiereCompatible" type="xs:boolean"/>
+<xs:element name="niveauCompatible" type="xs:boolean"/>
+<xs:element name="scoreCompetences" type="xs:int"/>
+<xs:element name="competenceManquante" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+<xs:element name="motif" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+</xs:schema>

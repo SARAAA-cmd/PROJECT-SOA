@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:verifierEtudiantResponse xmlns:ns2="http://stages.universite.com/etudiants" xmlns:ns3="http://stages.universite.com/commun">
+      <verification>
+        <matricule>E2026005</matricule>
+        <existe>true</existe>
+        <statut>SUSPENDU</statut>
+        <eligible>false</eligible>
+        <message>Étudiant non éligible (statut SUSPENDU)</message>
+      </verification>
+    </ns2:verifierEtudiantResponse>
+  </S:Body>
+</S:Envelope>

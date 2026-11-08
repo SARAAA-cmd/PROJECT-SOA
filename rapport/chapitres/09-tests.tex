@@ -1,0 +1,124 @@
+\chapter{Scénarios de test}\label{chap:tests}
+
+\section{Stratégie}
+Trois niveaux de tests complémentaires ont été mis en place :
+\begin{enumerate}
+  \item \textbf{Tests d'intégration automatisés} (JUnit 5, \code{PlateformeIT}) : la plateforme complète est démarrée
+        sur des bases H2 en mémoire puis sollicitée par de \emph{vrais} appels SOAP (clients JAX-WS générés depuis le WSDL)
+        et HTTP. Les tests couvrent les services un par un puis le processus de bout en bout, y compris les pannes.
+        Ils s'exécutent à chaque \code{mvn package} et ont également été exécutés sur \textbf{PostgreSQL~16}.
+  \item \textbf{Collection Postman} (\code{docs/postman}) : 39 requêtes enchaînées avec 45 assertions sur les codes
+        et les contenus, authentifiées par clé d'API, exécutable dans le \emph{Collection Runner} ou avec Newman.
+  \item \textbf{Requêtes SoapUI} (\code{docs/soap}) : enveloppes prêtes à l'emploi pour chaque type d'opération,
+        accompagnées des réponses réellement obtenues.
+\end{enumerate}
+
+\section{Tests automatisés}
+\begin{longtable}{@{}lp{7.2cm}p{5.2cm}c@{}}
+\caption{Scénarios de test automatisés et résultats}\label{tab:tests}\\
+\toprule
+\textbf{ID} & \textbf{Scénario} & \textbf{Résultat attendu} & \textbf{Résultat} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Scénario} & \textbf{Résultat attendu} & \textbf{Résultat} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\multicolumn{4}{@{}l}{\textit{Services SOAP}}\\
+ST-01 & Récupérer les trois WSDL & Opérations présentes dans chaque contrat & \ok \\
+ST-02 & Appel SOAP sans en-tête WS-Security & Fault \code{FailedAuthentication} & \ok \\
+ST-03 & Ajouter, consulter, modifier, supprimer un étudiant & Statut \code{ACTIF} par défaut ; consultation après suppression : \code{RESSOURCE\_INTROUVABLE} & \ok \\
+ST-04 & Ajouter un étudiant (matricule, e-mail et niveau invalides) & Fault \code{DONNEES\_INVALIDES} avec 3 détails & \ok \\
+ST-05 & Ajouter un matricule existant & Fault \code{CONFLIT} & \ok \\
+ST-06 & Un étudiant consulte une autre fiche / supprime sa fiche & Fault \code{ACCES\_REFUSE} & \ok \\
+ST-07 & Vérifier un étudiant actif, suspendu, inexistant & éligible / non éligible / inexistant & \ok \\
+ST-08 & CRUD entreprise ; offres d'une entreprise ; suppression avec offres actives & 2 offres ; \code{REGLE\_METIER} & \ok \\
+ST-09 & Publier une offre : entreprise non référencée, autre entreprise, entreprise propriétaire & \code{REGLE\_METIER}, \code{ACCES\_REFUSE}, offre \code{ACTIVE} & \ok \\
+ST-10 & Compatibilité AMOA/M2, DATA/L3 et offre expirée & compatible, score 50 \% ; incompatible, 2 motifs ; incompatible (date limite) & \ok \\
+ST-11 & Disponibilité d'une offre expirée & date dépassée, non disponible & \ok \\
+ST-12 & Fiche d'un candidat consultée par une entreprise puis par le responsable & téléphone et e-mail masqués, adresse absente ; fiche complète & \ok \\
+\multicolumn{4}{@{}l}{\textit{Services REST}}\\
+RT-01 & Requêtes sans identifiants, avec mauvais mot de passe, rôle étudiant sur \code{POST /stages} & 401, 401, 403 & \ok \\
+RT-02 & Dépôt invalide, valide, en double, JSON mal formé & 400, 201 \code{DEPOSEE}, 409, 400 & \ok \\
+RT-03 & Transition interdite, annulation par un tiers, passage en évaluation, annulation refusée, historique ; annulation d'une candidature déposée & 409, 403, 200, 422, 3 entrées ; \code{ANNULEE} puis 422 & \ok \\
+RT-04 & Notification d'acceptation ; lecture par un autre étudiant ; type inconnu & 201 et message rendu ; 403 ; 400 & \ok \\
+RT-05 & Stage : création, doublon, compte rendu, note 25, évaluation finale, historique & 201 \code{EN\_COURS}, 409, 201, 400, \code{TERMINE}, moyenne 16,5, étudiant \code{ACTIF} & \ok \\
+RT-06 & Clé d'API valide, invalide, régénérée ; ancienne clé & 200 ; 401 \code{CLE\_API\_INVALIDE} ; 200 ; 401 (révoquée) & \ok \\
+\multicolumn{4}{@{}l}{\textit{Processus BPMN}}\\
+PT-01 & Scénario nominal : candidature puis acceptation par l'entreprise & Stage créé aux dates saisies, étudiant \code{EN\_STAGE}, offre \code{POURVUE}, 3 notifications ; tâche invisible pour une autre entreprise & \ok \\
+PT-02 & Candidatures non recevables : étudiant suspendu, niveau insuffisant, date dépassée, entreprise non référencée, offre pourvue & 5 instances terminées par « Candidature rejetée » avec motif & \ok \\
+PT-03 & Complément sans commentaire, complément, puis refus & 400 ; retour à l'évaluation ; \code{REFUSEE} ; notifications \code{DEMANDE\_COMPLEMENT} et \code{REFUS} & \ok \\
+PT-04 & Service Candidatures en panne pendant les vérifications, puis relance & \code{INCIDENT\_TECHNIQUE} (étape \code{VERIFICATIONS}) puis \code{EN\_ATTENTE\_DECISION} & \ok \\
+PT-05 & Service Stages en panne pendant la finalisation, puis abandon & \code{INCIDENT\_TECHNIQUE} (étape \code{FINALISATION}) puis \code{ABANDONNEE} & \ok \\
+PT-06 & Service Notifications en panne pendant le dépôt & Processus poursuivi, incident consigné & \ok \\
+PT-07 & Annulation d'une candidature déposée & Instance \code{INTERROMPU} & \ok \\
+PT-08 & Délai de décision dépassé (2 s en test) & Relance de l'entreprise, évaluation toujours en attente & \ok \\
+PT-09 & Prise en charge par l'entreprise puis tentative d'annulation & \code{DEPOSEE} → \code{EN\_COURS\_EVALUATION}, tâche attribuée, annulation refusée (422) & \ok \\
+PT-10 & Sixième candidature en cours pour un même étudiant & Rejet motivé par le processus ; 422 sur l'API & \ok \\
+\end{longtable}
+
+\begin{lstlisting}[language=sh, caption={Exécution de la suite (extrait de la sortie Maven Surefire)}]
+$ mvn test
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Soap
+Tests run: 6,  Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Rest
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Processus
+
+$ mvn test -Ddb.url=jdbc:postgresql://localhost:5433/stages -Dbpmn.db.url=jdbc:postgresql://...
+Tests run: 24, Failures: 0, Errors: 0, Skipped: 0
+\end{lstlisting}
+
+\begin{lstlisting}[language=Java, caption={Exemple de test : indisponibilité puis relance (PT-04)}]
+@Test
+@DisplayName("PT-04 Indisponibilité d'un service : incident, tâche du responsable, relance réussie")
+void incidentRelance() {
+    SimulateurPannes.definir("candidatures", true);
+    JsonNode r;
+    try {
+        r = soumettre("E2026003", 4).json();
+    } finally {
+        SimulateurPannes.definir("candidatures", false);
+    }
+    assertEquals("INCIDENT_TECHNIQUE", r.get("statut").asText());
+    assertEquals("VERIFICATIONS", r.get("variables").get("etapeCourante").asText());
+    JsonNode apres = Http.post("/api/processus/taches/" + tache(r, "traiterIncident") + "/incident",
+            ADMIN, ADMIN_PWD, Map.of("action", "RELANCER")).json();
+    assertEquals("EN_ATTENTE_DECISION", apres.get("statut").asText());
+}
+\end{lstlisting}
+
+\section{Collection Postman}
+La collection est organisée en six dossiers (système, processus, candidatures, notifications, stages, pannes). Les
+variables de collection (\code{tacheId}, \code{candidatureId}, \code{stageId}, \code{incidentId}) sont alimentées par
+les scripts de test, ce qui permet d'enchaîner un scénario complet.
+
+\begin{lstlisting}[language=sh, caption={Exécution de la collection avec Newman}]
+$ newman run docs/postman/gestion-stages.postman_collection.json
+|                requests |                 39 |                 0 |
+|              assertions |                 45 |                 0 |
+\end{lstlisting}
+
+\section{Requêtes SoapUI}
+Après import des trois WSDL dans SoapUI, les enveloppes de \code{docs/soap/} peuvent être collées telles quelles :
+
+\begin{table}[H]
+\centering\small
+\caption{Requêtes SOAP fournies}
+\begin{tabularx}{\textwidth}{@{}lYl@{}}
+\toprule
+\textbf{Fichier} & \textbf{Cas} & \textbf{Résultat obtenu} \\
+\midrule
+\code{01-etudiants-ajouterEtudiant} & Création d'une étudiante & fiche \code{ACTIF} \\
+\code{02-etudiants-consulterEtudiant} & Consultation & fiche complète \\
+\code{03-etudiants-verifierEtudiant} & Étudiante suspendue & \code{eligible=false} \\
+\code{04-etudiants-ajouterEtudiant-invalide} & Données invalides & Fault, 3 détails \\
+\code{05-entreprises-verifierEntreprise} & Entreprise non référencée & \code{referencee=false} \\
+\code{06-entreprises-consulterOffresEntreprise} & Composition SOAP & 2 offres \\
+\code{07-offres-creerOffre} & Publication d'une offre & offre \code{ACTIVE} \\
+\code{08-offres-verifierDisponibilite} & Offre expirée & \code{disponible=false} \\
+\code{09-offres-verifierCompatibilite} & Score de compétences & 50 \%, 2 manques \\
+\code{10-sans-ws-security} & Sans authentification & \code{wsse:FailedAuthentication} \\
+\bottomrule
+\end{tabularx}
+\end{table}

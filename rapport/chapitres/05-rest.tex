@@ -1,0 +1,198 @@
+\chapter{Services REST}\label{chap:rest}
+
+\section{Conventions communes}
+\begin{itemize}
+  \item \textbf{Ressources} nommées au pluriel (\code{/candidatures}, \code{/stages}), sous-ressources pour les
+        compositions (\code{/stages/\{id\}/evaluations}), filtres en paramètres de requête (\code{?matricule=\&statut=}).
+  \item \textbf{Méthodes HTTP} : \code{GET} lecture (sûre, idempotente), \code{POST} création, \code{PATCH} modification
+        partielle (statut, complément), \code{DELETE} annulation.
+  \item \textbf{Format} : JSON UTF-8, dates ISO-8601, champs nuls omis.
+  \item \textbf{Création} : \code{201 Created} avec l'en-tête \code{Location} de la ressource créée.
+  \item \textbf{Authentification} par clé d'API (en-tête \code{X-API-Key}) pour les applications et scripts, ou
+        HTTP Basic pour l'interface web ; le périmètre est restreint automatiquement selon l'acteur
+        (un étudiant ne voit que ses candidatures, une entreprise que celles qui la concernent).
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Codes HTTP retournés}\label{tab:codes}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{5.4cm}Y@{}}
+\toprule
+\textbf{Code} & \textbf{Erreur} & \textbf{Cas} \\
+\midrule
+200 OK & — & Lecture, modification, annulation réussies \\
+201 Created & — & Création (candidature, notification, stage, compte rendu, évaluation, instance de processus) \\
+400 Bad Request & \code{DONNEES\_INVALIDES}, \code{JSON\_INVALIDE} & Champs obligatoires manquants, format ou bornes non respectés, JSON mal formé \\
+401 Unauthorized & \code{NON\_AUTHENTIFIE}, \code{CLE\_API\_INVALIDE} & Identifiants ou clé d'API absents, invalides ou révoqués \\
+403 Forbidden & \code{ACCES\_REFUSE} & Rôle non autorisé ou ressource hors périmètre \\
+404 Not Found & \code{RESSOURCE\_INTROUVABLE} & Identifiant inconnu \\
+409 Conflict & \code{CONFLIT}, \code{TRANSITION\_INTERDITE}, \code{DECISION\_VIA\_\allowbreak PROCESSUS} & Doublon, transition d'état interdite, décision contournant le processus \\
+422 Unprocessable Entity & \code{REGLE\_METIER} & Règle de gestion (annulation d'une candidature déjà traitée…) \\
+500 / 502 & \code{ERREUR\_INTERNE}, \code{ERREUR\_SERVICE\_AMONT} & Erreur inattendue, faute d'un service SOAP appelé \\
+503 Service Unavailable & \code{SERVICE\_INDISPONIBLE} & Service indisponible (en-tête \code{Retry-After}) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Toutes les erreurs ont le même corps JSON, produit par un \code{ExceptionMapper} unique :
+\begin{lstlisting}[language=json, caption={Corps d'erreur uniforme (400)}]
+{
+  "status": 400,
+  "erreur": "DONNEES_INVALIDES",
+  "message": "Données invalides",
+  "details": [ "Le champ 'matricule' est obligatoire", "Le champ 'offreId' est obligatoire" ],
+  "horodatage": "2026-10-23T18:22:16.985909069Z"
+}
+\end{lstlisting}
+
+\section{Service 4 — Gestion des candidatures}
+\textbf{Base} : \code{/api/candidatures}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Points d'accès du service Candidatures}
+\begin{tabularx}{\textwidth}{@{}llYl@{}}
+\toprule
+\textbf{Méthode} & \textbf{URI} & \textbf{Description} & \textbf{Codes} \\
+\midrule
+POST & \code{/candidatures} & Dépôt (enregistrement) d'une candidature ; refus des doublons et au-delà de 5 candidatures en cours. Réservé à l'orchestrateur & 201, 400, 409, 422 \\
+GET & \code{/candidatures} & Recherche (\code{matricule}, \code{offreId}, \code{entrepriseId}, \code{statut}) & 200 \\
+GET & \code{/candidatures/etudiant/\{matricule\}} & Candidatures d'un étudiant & 200, 403 \\
+GET & \code{/candidatures/\{id\}} & Détail & 200, 403, 404 \\
+GET & \code{/candidatures/\{id\}/historique} & Historique horodaté des changements de statut & 200, 404 \\
+PATCH & \code{/candidatures/\{id\}} & Complément du dossier (lettre, CV) par l'étudiant & 200, 422 \\
+PATCH & \code{/candidatures/\{id\}/statut} & Changement de statut \code{\{statut, motif\}} contrôlé par l'automate & 200, 400, 409 \\
+DELETE & \code{/candidatures/\{id\}} & Annulation (statut \code{ANNULEE}), uniquement tant que la candidature est \code{DEPOSEE} & 200, 403, 422 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\sffamily\small, node distance=12mm and 28mm, >={Latex[length=2mm]},
+  st/.style={draw=black!45, rounded corners=8pt, fill=#1, minimum width=3.2cm, minimum height=8mm}]
+  \node[st=soap] (dep) {DEPOSEE};
+  \node[st=bpmn, right=of dep] (eval) {EN\_COURS\_EVALUATION};
+  \node[st=rest, right=22mm of eval, yshift=8mm] (acc) {ACCEPTEE};
+  \node[st=black!6, below=14mm of eval, xshift=-24mm] (ann) {ANNULEE};
+  \node[st=black!6, right=22mm of eval, yshift=-8mm] (ref) {REFUSEE};
+  \node[left=10mm of dep] (init) {};
+  \draw[->, thick] (init) -- node[above, font=\scriptsize]{POST} (dep);
+  \draw[->, thick] (dep) -- node[above, font=\scriptsize]{prise en charge} (eval);
+  \draw[->, thick] (eval) -- node[above, font=\scriptsize, sloped]{décision} (acc);
+  \draw[->, thick] (eval) -- node[below, font=\scriptsize, sloped]{décision} (ref);
+  \draw[->, thick] (dep) |- node[pos=0.25, left, font=\scriptsize]{DELETE} (ann);
+  \draw[->, thick] (dep.north) to[bend left=22] node[above, font=\scriptsize]{refus direct} (ref.north);
+  \draw[->, thick, black!50] (eval) edge[loop above] node[font=\scriptsize]{complément (PATCH)} (eval);
+\end{tikzpicture}
+\caption{Automate des statuts d'une candidature (états finals en gris et vert)}\label{fig:automate}
+\end{figure}
+
+\begin{lstlisting}[language=json, caption={Ressource candidature (GET \code{/api/candidatures/1})}]
+{
+  "id": 1,
+  "matricule": "E2026001",
+  "nomEtudiant": "Yasmine Benali",
+  "offreId": 1,
+  "titreOffre": "Assistant chef de projet AMOA",
+  "entrepriseId": 1,
+  "lettreMotivation": "Très motivée par la modélisation des processus métier.",
+  "cvUrl": "https://cv.example/E2026001.pdf",
+  "scoreCompatibilite": 100,
+  "statut": "ACCEPTEE",
+  "motif": "Bienvenue !",
+  "processInstanceId": "5",
+  "dateDepot": "2026-10-23T18:18:00.699389",
+  "dateMiseAJour": "2026-10-23T18:18:03.470788"
+}
+\end{lstlisting}
+
+\section{Service 5 — Notifications}
+\textbf{Base} : \code{/api/notifications}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Points d'accès du service Notifications}
+\begin{tabularx}{\textwidth}{@{}llYl@{}}
+\toprule
+\textbf{Méthode} & \textbf{URI} & \textbf{Description} & \textbf{Codes} \\
+\midrule
+POST & \code{/notifications} & Envoi d'une notification typée \code{\{type, destinataireType, destinataireId, email, candidatureId, parametres\}} ; le gabarit est rendu côté serveur & 201, 400 \\
+GET & \code{/notifications} & Boîte de réception (filtres \code{destinataireType}, \code{destinataireId}, \code{candidatureId}, \code{type}) & 200 \\
+GET & \code{/notifications/\{id\}} & Détail (destinataire uniquement) & 200, 403, 404 \\
+PATCH & \code{/notifications/\{id\}/lue} & Marquer comme lue & 200 \\
+POST & \code{/notifications/rappels} & Campagne de rappels des dates limites \code{\{joursAvant\}} & 200, 400 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Les messages sont produits à partir de gabarits paramétrés (\code{\{nomEtudiant\}}, \code{\{titreOffre\}},
+\code{\{motif\}}…). Les types couvrent les besoins du sujet : confirmation de dépôt, information de l'entreprise,
+acceptation, refus, demande de complément, rappels de date limite, ainsi que le rejet automatique, la relance de
+l'entreprise et l'information en cas d'incident.
+
+Le canal e-mail envoie de \textbf{vrais messages} en SMTP (Jakarta Mail), au format texte et HTML aux couleurs de
+l'INPT. En démonstration, le serveur SMTP est \textbf{Mailpit} : il capture tous les messages dans une boîte de
+réception consultable sur \code{http://localhost:8025}, sans qu'aucun e-mail ne sorte de la machine
+(figure~\ref{fig:mailpit}). Chaque notification reste archivée en base avec son statut d'envoi (\code{ENVOYEE},
+\code{ECHEC\_ENVOI} si le serveur SMTP ne répond pas, \code{JOURNALISEE} si l'envoi est désactivé), ce qui la rend
+aussi consultable dans l'interface. Pour un vrai serveur, il suffit de changer \code{mail.smtp.hote}.
+
+La \textbf{campagne de rappels} illustre la composition de services : le service REST interroge le service SOAP Offres
+(\code{listerOffresExpirantBientot}), le service SOAP Étudiants (\code{listerEtudiants(statut=ACTIF)}) puis
+\code{verifierCompatibilite} pour chaque couple, et n'envoie qu'un rappel par étudiant et par offre. Elle s'exécute
+automatiquement toutes les 24 heures et peut être déclenchée à la demande.
+
+\section{Service 6 — Suivi des stages}
+\textbf{Base} : \code{/api/stages}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Points d'accès du service Suivi des stages}
+\begin{tabularx}{\textwidth}{@{}llYl@{}}
+\toprule
+\textbf{Méthode} & \textbf{URI} & \textbf{Description} & \textbf{Codes} \\
+\midrule
+POST & \code{/stages} & Enregistrement d'un stage accepté (un seul par candidature) & 201, 400, 409 \\
+GET & \code{/stages} & Recherche (\code{matricule}, \code{entrepriseId}, \code{statut}, \code{candidatureId}) & 200 \\
+GET & \code{/stages/\{id\}} & Détail & 200, 403, 404 \\
+GET & \code{/stages/\{id\}/statut} & Statut, dates, durée, jours restants et progression calculée & 200 \\
+PATCH & \code{/stages/\{id\}/statut} & Transition \code{PLANIFIE→EN\_COURS→TERMINE}, ou \code{INTERROMPU} & 200, 409 \\
+POST & \code{/stages/\{id\}/comptes-rendus} & Dépôt d'un compte rendu périodique & 201, 400, 422 \\
+GET & \code{/stages/\{id\}/comptes-rendus} & Liste des comptes rendus & 200 \\
+POST & \code{/stages/\{id\}/evaluations} & Évaluation (\code{MI\_PARCOURS} ou \code{FINALE}, note sur 20) & 201, 400, 409, 422 \\
+GET & \code{/stages/\{id\}/evaluations} & Liste des évaluations & 200 \\
+GET & \code{/stages/etudiant/\{matricule\}/historique} & Stages réalisés, nombre de comptes rendus, évaluations et moyenne & 200, 403 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{lstlisting}[language=json, caption={GET \code{/api/stages/1/statut}}]
+{ "stageId": 1, "statut": "TERMINE", "dateDebut": "2027-02-01", "dateFin": "2027-07-31",
+  "dureeJours": 180, "joursRestants": 281, "progression": 100 }
+\end{lstlisting}
+
+L'évaluation finale clôture le stage (\code{TERMINE}) ; à la fin ou à l'interruption d'un stage, le service appelle
+\code{changerStatutEtudiant(ACTIF)} du service SOAP Étudiants pour rendre l'étudiant à nouveau éligible.
+
+\section{API d'orchestration}
+\textbf{Base} : \code{/api/processus}. Elle expose le processus BPMN aux acteurs humains.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Points d'accès de l'orchestration}
+\begin{tabularx}{\textwidth}{@{}llYl@{}}
+\toprule
+\textbf{Méthode} & \textbf{URI} & \textbf{Description} & \textbf{Rôles} \\
+\midrule
+POST & \code{/processus/candidatures} & Soumission : démarre une instance ; renvoie son état (rejet motivé, attente de décision ou incident) & Étud., Resp. \\
+GET & \code{/processus/taches} & Tâches humaines en attente (filtrées par entreprise) & Ent., Resp. \\
+POST & \code{/processus/taches/\{id\}/prise-en-charge} & L'entreprise commence l'examen : tâche attribuée, candidature \code{EN\_COURS\_EVALUATION} & Ent., Resp. \\
+POST & \code{/processus/taches/\{id\}/decision} & Décision \code{ACCEPTEE} / \code{REFUSEE} / \code{COMPLEMENT} + commentaire, dates, tuteur & Ent., Resp. \\
+POST & \code{/processus/taches/\{id\}/incident} & Traitement d'un incident : \code{RELANCER} ou \code{ABANDONNER} & Resp. \\
+GET & \code{/processus/instances} & Instances récentes & Resp. \\
+GET & \code{/processus/instances/\{id\}} & État, variables, tâches, activités actives et trace d'exécution & Concernés \\
+GET & \code{/processus/definition} & Modèle BPMN 2.0 (XML) & Tous \\
+\bottomrule
+\end{tabularx}
+\end{table}

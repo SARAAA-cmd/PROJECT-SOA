@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='UTF-8'?><!-- Published by XML-WS Runtime (https://github.com/eclipse-ee4j/metro-jax-ws). Runtime's version is XML-WS Runtime 4.0.3 git-revision#a57c222. --><xs:schema xmlns:tns="http://stages.universite.com/entreprises" xmlns:ns1="http://stages.universite.com/offres" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" targetNamespace="http://stages.universite.com/entreprises">
+
+<xs:import namespace="http://stages.universite.com/offres" schemaLocation="http://localhost:8090/ws/entreprises?xsd=1"/>
+
+<xs:element name="ajouterEntreprise" type="tns:ajouterEntreprise"/>
+
+<xs:element name="ajouterEntrepriseResponse" type="tns:ajouterEntrepriseResponse"/>
+
+<xs:element name="consulterEntreprise" type="tns:consulterEntreprise"/>
+
+<xs:element name="consulterEntrepriseResponse" type="tns:consulterEntrepriseResponse"/>
+
+<xs:element name="consulterOffresEntreprise" type="tns:consulterOffresEntreprise"/>
+
+<xs:element name="consulterOffresEntrepriseResponse" type="tns:consulterOffresEntrepriseResponse"/>
+
+<xs:element name="listerEntreprises" type="tns:listerEntreprises"/>
+
+<xs:element name="listerEntreprisesResponse" type="tns:listerEntreprisesResponse"/>
+
+<xs:element name="modifierEntreprise" type="tns:modifierEntreprise"/>
+
+<xs:element name="modifierEntrepriseResponse" type="tns:modifierEntrepriseResponse"/>
+
+<xs:element name="supprimerEntreprise" type="tns:supprimerEntreprise"/>
+
+<xs:element name="supprimerEntrepriseResponse" type="tns:supprimerEntrepriseResponse"/>
+
+<xs:element name="verifierEntreprise" type="tns:verifierEntreprise"/>
+
+<xs:element name="verifierEntrepriseResponse" type="tns:verifierEntrepriseResponse"/>
+
+<xs:complexType name="supprimerEntreprise">
+<xs:sequence>
+<xs:element name="entrepriseId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="supprimerEntrepriseResponse">
+<xs:sequence>
+<xs:element name="supprime" type="xs:boolean"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="ajouterEntreprise">
+<xs:sequence>
+<xs:element name="entreprise" type="tns:Entreprise" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="Entreprise">
+<xs:sequence>
+<xs:element name="id" type="xs:long" minOccurs="0"/>
+<xs:element name="raisonSociale" type="xs:string"/>
+<xs:element name="secteurActivite" type="xs:string"/>
+<xs:element name="adresse" type="xs:string" minOccurs="0"/>
+<xs:element name="ville" type="xs:string" minOccurs="0"/>
+<xs:element name="email" type="xs:string"/>
+<xs:element name="telephone" type="xs:string" minOccurs="0"/>
+<xs:element name="siteWeb" type="xs:string" minOccurs="0"/>
+<xs:element name="contactNom" type="xs:string"/>
+<xs:element name="contactFonction" type="xs:string" minOccurs="0"/>
+<xs:element name="contactEmail" type="xs:string"/>
+<xs:element name="contactTelephone" type="xs:string" minOccurs="0"/>
+<xs:element name="referencee" type="xs:boolean"/>
+<xs:element name="dateReferencement" type="xs:date" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="ajouterEntrepriseResponse">
+<xs:sequence>
+<xs:element name="entreprise" type="tns:Entreprise" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="modifierEntreprise">
+<xs:sequence>
+<xs:element name="entreprise" type="tns:Entreprise" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="modifierEntrepriseResponse">
+<xs:sequence>
+<xs:element name="entreprise" type="tns:Entreprise" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterEntreprise">
+<xs:sequence>
+<xs:element name="entrepriseId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterEntrepriseResponse">
+<xs:sequence>
+<xs:element name="entreprise" type="tns:Entreprise" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterOffresEntreprise">
+<xs:sequence>
+<xs:element name="entrepriseId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterOffresEntrepriseResponse">
+<xs:sequence>
+<xs:element name="offre" type="ns1:Offre" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerEntreprises">
+<xs:sequence>
+<xs:element name="secteurActivite" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="listerEntreprisesResponse">
+<xs:sequence>
+<xs:element name="entreprise" type="tns:Entreprise" minOccurs="0" maxOccurs="unbounded"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierEntreprise">
+<xs:sequence>
+<xs:element name="entrepriseId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="verifierEntrepriseResponse">
+<xs:sequence>
+<xs:element name="verification" type="tns:VerificationEntreprise" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="VerificationEntreprise">
+<xs:sequence>
+<xs:element name="entrepriseId" type="xs:long" minOccurs="0"/>
+<xs:element name="existe" type="xs:boolean"/>
+<xs:element name="referencee" type="xs:boolean"/>
+<xs:element name="raisonSociale" type="xs:string" minOccurs="0"/>
+<xs:element name="message" type="xs:string" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+</xs:schema>

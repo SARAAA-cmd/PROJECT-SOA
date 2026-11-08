@@ -1,0 +1,196 @@
+\chapter{Architecture SOA}\label{chap:architecture}
+
+\section{Vue d'ensemble}
+La plateforme est découpée en six services métier, une couche d'orchestration et une interface web
+(figure~\ref{fig:architecture}). Tous sont hébergés par un même serveur HTTP pour simplifier le déploiement, mais
+chaque service reste \textbf{autonome} : il possède son contrat (WSDL ou API REST), ses propres tables et ses
+règles de sécurité, et \textbf{n'accède jamais directement aux données d'un autre service} ; toute interaction
+passe par un appel réseau SOAP ou REST. Chaque service pourrait ainsi être déployé séparément sans modification
+du code, simplement en changeant l'adresse de base.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  font=\sffamily\small, node distance=4mm,
+  svc/.style={draw=black!40, rounded corners=3pt, minimum width=3.4cm, minimum height=1.15cm, align=center, fill=#1},
+  cli/.style={draw=black!40, rounded corners=3pt, minimum width=3.2cm, minimum height=0.9cm, align=center, fill=white},
+  db/.style={draw=black!40, cylinder, shape border rotate=90, aspect=0.25, minimum width=2.6cm, minimum height=1.2cm, align=center, fill=black!4},
+  fl/.style={-{Latex[length=2mm]}, thick, black!55}, fl2/.style={-{Latex[length=2mm]}, thick, primaire}]
+  % clients
+  \node[cli] (ui) {Interface web\\\scriptsize HTML/JS};
+  \node[cli, right=6mm of ui] (outils) {SoapUI / Postman};
+  \node[cli, right=6mm of outils] (bonita) {Bonita Studio\\\scriptsize (option)};
+  % serveur
+  \node[svc=soap, below=16mm of ui, xshift=-12mm] (etu) {\textbf{1. Étudiants}\\\scriptsize SOAP \code{/ws/etudiants}};
+  \node[svc=soap, below=of etu] (ent) {\textbf{2. Entreprises}\\\scriptsize SOAP \code{/ws/entreprises}};
+  \node[svc=soap, below=of ent] (off) {\textbf{3. Offres}\\\scriptsize SOAP \code{/ws/offres}};
+  \node[svc=bpmn, right=14mm of ent, minimum height=3.9cm, minimum width=3.6cm] (orch) {\textbf{Orchestrateur}\\[2pt]\scriptsize API \code{/api/processus}\\[2pt]\scriptsize Moteur BPMN 2.0\\\scriptsize Flowable\\[4pt]\scriptsize délégués Java\\\scriptsize + reprise / erreurs};
+  \node[svc=rest, right=14mm of orch, yshift=13.5mm] (cand) {\textbf{4. Candidatures}\\\scriptsize REST \code{/api/candidatures}};
+  \node[svc=rest, below=of cand] (notif) {\textbf{5. Notifications}\\\scriptsize REST \code{/api/notifications}};
+  \node[svc=rest, below=of notif] (stage) {\textbf{6. Suivi des stages}\\\scriptsize REST \code{/api/stages}};
+  \begin{scope}[on background layer]
+    \node[draw=primaire, dashed, rounded corners=6pt, fit=(etu)(off)(orch)(cand)(stage), inner sep=10pt, label={[primaire,font=\sffamily\scriptsize\bfseries,anchor=south]north:Serveur HTTP :8090 — sécurité WS-Security (SOAP) / HTTP Basic (REST)}] (srv) {};
+  \end{scope}
+  % bases
+  \node[db, below=12mm of off, xshift=30mm] (base) {\scriptsize Base \og stages \fg{}\\\scriptsize H2 / PostgreSQL};
+  \node[db, right=22mm of base] (fbase) {\scriptsize Base BPMN\\\scriptsize (Flowable)};
+  % flux
+  \draw[fl] (ui) -- node[left, font=\scriptsize, pos=0.35]{SOAP + REST} (ui |- srv.north);
+  \draw[fl] (outils) -- (outils |- srv.north);
+  \draw[fl, dashed] (bonita) -- (bonita |- srv.north);
+  \draw[fl2] (orch.west) -- node[above, font=\scriptsize]{SOAP} (ent.east);
+  \draw[fl2] (orch.west |- etu.east) -- (etu.east);
+  \draw[fl2] (orch.west |- off.east) -- (off.east);
+  \draw[fl2] (orch.east |- cand.west) -- node[above, font=\scriptsize]{REST} (cand.west);
+  \draw[fl2] (orch.east |- notif.west) -- (notif.west);
+  \draw[fl2] (orch.east |- stage.west) -- (stage.west);
+  \draw[fl, densely dotted] (off.south) -- (base);
+  \draw[fl, densely dotted] (stage.south) |- (base.east);
+  \draw[fl, densely dotted] (orch.south) -- (fbase);
+\end{tikzpicture}
+\caption{Architecture générale de la plateforme}\label{fig:architecture}
+\end{figure}
+
+\section{Principes SOA appliqués}
+\begin{description}[style=nextline]
+  \item[Contrat standardisé] Les services SOAP sont décrits par un WSDL 1.1 (style \emph{document/literal}) et des
+        schémas XSD générés à partir des classes JAXB. Les services REST suivent une convention uniforme : ressources
+        nommées au pluriel, JSON, codes HTTP normalisés et corps d'erreur commun.
+  \item[Autonomie et propriété des données] Chaque service est seul propriétaire de ses tables (tableau~\ref{tab:proprietes}).
+        Lorsqu'un service a besoin d'une donnée d'un autre domaine, il l'obtient par un appel de service.
+  \item[Couplage faible] L'orchestrateur ne connaît que les contrats : les clients SOAP sont créés dynamiquement à partir
+        du WSDL publié (\code{Service.create(url?wsdl)}) et les appels REST passent par HTTP.
+  \item[Composition] Les services se composent entre eux (par exemple, le service Entreprises interroge le service Offres
+        pour \code{consulterOffresEntreprise}) et sont orchestrés par le processus BPMN.
+  \item[Sans état] Chaque requête porte ses informations d'authentification ; aucune session serveur n'est conservée.
+  \item[Résilience] Tout appel inter-services est protégé par une politique de reprise ; une indisponibilité persistante
+        devient une erreur BPMN traitée par le processus (section~\ref{sec:erreurs}).
+\end{description}
+
+\begin{table}[htbp]
+\centering
+\caption{Propriété des données par service}\label{tab:proprietes}
+\begin{tabularx}{\textwidth}{@{}llY@{}}
+\toprule
+\textbf{Service} & \textbf{Type} & \textbf{Tables possédées} \\
+\midrule
+1. Étudiants & SOAP & \code{etudiant} \\
+2. Entreprises & SOAP & \code{entreprise} \\
+3. Offres de stage & SOAP & \code{offre} \\
+4. Candidatures & REST & \code{candidature}, \code{candidature\_historique} \\
+5. Notifications & REST & \code{notification} \\
+6. Suivi des stages & REST & \code{stage}, \code{compte\_rendu}, \code{evaluation} \\
+Orchestrateur & BPMN & tables \code{ACT\_*} du moteur Flowable (base séparée) \\
+Transverse & — & \code{utilisateur} (comptes et rôles) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Choix technologiques}
+\begin{table}[htbp]
+\centering
+\caption{Pile technique}
+\begin{tabularx}{\textwidth}{@{}llY@{}}
+\toprule
+\textbf{Couche} & \textbf{Technologie} & \textbf{Justification} \\
+\midrule
+Langage & Java 21 & Recommandé par le sujet ; fils virtuels pour les appels concurrents \\
+SOAP & JAX-WS 4 (Eclipse Metro) & Implémentation de référence, génération automatique du WSDL \\
+REST & JAX-RS 3.1 (Jersey) + Jackson & Implémentation de référence, sérialisation JSON \\
+Serveur & \code{com.sun.net.httpserver} du JDK & Un seul processus léger, sans conteneur d'applications \\
+Persistance & JDBC, H2 2.3 / PostgreSQL 16 & H2 pour la démonstration, PostgreSQL pour la production \\
+BPMN & Flowable 7.1 (moteur embarqué) & Exécute le BPMN 2.0 standard (« outil équivalent » à Bonita) \\
+Interface & HTML, CSS, JavaScript, bpmn-js & Sans framework ni étape de compilation ; diagramme BPMN interactif \\
+E-mails & Jakarta Mail (SMTP) + Mailpit & Vrais e-mails HTML capturés dans une boîte de test locale \\
+Tests & JUnit 5, Postman/Newman, SoapUI & Tests d'intégration de bout en bout \\
+Build & Maven (jar exécutable), Docker Compose & Lancement en une commande \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Interactions entre services}
+Le tableau~\ref{tab:interactions} recense les dépendances entre services ; la figure~\ref{fig:sequence} montre
+l'enchaînement des appels lors du dépôt d'une candidature recevable.
+
+\begin{table}[htbp]
+\centering
+\caption{Matrice des appels inter-services}\label{tab:interactions}
+\begin{tabularx}{\textwidth}{@{}llY@{}}
+\toprule
+\textbf{Appelant} & \textbf{Appelé} & \textbf{Opérations utilisées} \\
+\midrule
+Orchestrateur BPMN & Étudiants (SOAP) & \code{verifierEtudiant}, \code{consulterEtudiant}, \code{changerStatutEtudiant} \\
+Orchestrateur BPMN & Entreprises (SOAP) & \code{verifierEntreprise}, \code{consulterEntreprise} \\
+Orchestrateur BPMN & Offres (SOAP) & \code{consulterOffre}, \code{verifierCompatibilite}, \code{verifierDisponibilite}, \code{reserverPlace} \\
+Orchestrateur BPMN & Candidatures (REST) & \code{GET /candidatures?…}, \code{POST /candidatures}, \code{PATCH /candidatures/\{id\}/statut} \\
+Orchestrateur BPMN & Notifications (REST) & \code{POST /notifications} (7 types de messages) \\
+Orchestrateur BPMN & Stages (REST) & \code{POST /stages}, \code{GET /stages?candidatureId=} \\
+Entreprises (SOAP) & Offres (SOAP) & \code{listerOffres} (offres d'une entreprise, contrôle avant suppression) \\
+Offres (SOAP) & Entreprises (SOAP) & \code{verifierEntreprise} (référencement avant publication) \\
+Notifications (REST) & Offres, Étudiants (SOAP) & \code{listerOffresExpirantBientot}, \code{listerEtudiants}, \code{verifierCompatibilite} (rappels) \\
+Stages (REST) & Étudiants (SOAP) & \code{changerStatutEtudiant} (fin de stage) \\
+Candidatures (REST) & Orchestrateur & événement « candidature annulée » (interruption du processus) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\scriptsize, >={Latex[length=1.6mm]}]
+  \def\H{-12.4}
+  \foreach \x/\n/\c in {0/Étudiant\\(interface)/white, 2.15/API\\processus/bpmn, 4.3/Moteur\\BPMN/bpmn, 6.45/SOAP\\Étudiants/soap, 8.6/SOAP Offres\\Entreprises/soap, 10.75/REST\\Candidatures/rest, 12.9/REST\\Notifications/rest, 15.05/Entreprise\\(interface)/white} {
+    \node[draw=black!40, fill=\c, rounded corners=2pt, minimum width=1.9cm, minimum height=0.85cm, align=center] at (\x,0) {\n};
+    \draw[black!30, dashed] (\x,-0.45) -- (\x,\H);
+  }
+  \def\m#1#2#3#4{\draw[->] (#1,#3) -- node[above, inner sep=1.5pt]{#4} (#2,#3);}
+  \def\r#1#2#3#4{\draw[->, dashed, black!60] (#1,#3) -- node[above, inner sep=1.5pt]{#4} (#2,#3);}
+  \m{0}{2.15}{-1.0}{POST candidature}
+  \m{2.15}{4.3}{-1.5}{démarrer}
+  \m{4.3}{6.45}{-2.1}{verifierEtudiant}
+  \r{6.45}{4.3}{-2.55}{éligible}
+  \m{4.3}{8.6}{-3.1}{consulterOffre / verifierEntreprise}
+  \m{4.3}{8.6}{-3.6}{verifierCompatibilite}
+  \r{8.6}{4.3}{-4.05}{compatible, score}
+  \m{4.3}{8.6}{-4.6}{verifierDisponibilite}
+  \m{4.3}{10.75}{-5.1}{GET doublon ?}
+  \r{10.75}{4.3}{-5.55}{[ ]}
+  \node[draw=black!40, fill=bpmn, align=center, inner sep=2pt, anchor=west] at (4.4,-6.05) {passerelle : recevable ?};
+  \m{4.3}{10.75}{-6.6}{POST /candidatures}
+  \r{10.75}{4.3}{-7.05}{201 Created}
+  \m{4.3}{12.9}{-7.55}{CONFIRMATION\_DEPOT}
+  \m{4.3}{12.9}{-8.05}{RECEPTION\_CANDIDATURE}
+  \node[draw=black!40, fill=bpmn, align=center, inner sep=2pt, anchor=west] at (4.4,-9.05) {tâche humaine « Évaluer » (attente)};
+  \r{2.15}{0}{-9.5}{201 Created}
+  \m{15.05}{2.15}{-10.1}{POST /processus/taches/\{id\}/decision (ACCEPTEE)}
+  \m{2.15}{10.75}{-10.5}{prise en charge : PATCH EN\_COURS\_EVALUATION}
+  \m{4.3}{10.75}{-10.95}{PATCH ACCEPTEE}
+  \m{4.3}{12.9}{-11.4}{ACCEPTATION}
+  \node[align=left, anchor=west] at (4.45,-11.95) {puis \code{POST /stages}, \code{changerStatutEtudiant}, \code{reserverPlace}};
+\end{tikzpicture}}
+\caption{Diagramme de séquence du traitement d'une candidature recevable puis acceptée}\label{fig:sequence}
+\end{figure}
+
+\section{Déploiement}
+L'ensemble est livré sous la forme d'un \textbf{jar exécutable} unique (\code{java -jar gestion-stages.jar}).
+Au démarrage, le serveur crée le schéma s'il est absent, charge un jeu de données de démonstration, démarre le moteur
+BPMN et déploie le processus \emph{avant} d'ouvrir le port, puis publie les points d'accès :
+
+\begin{table}[H]
+\centering
+\caption{Points d'accès publiés}
+\begin{tabularx}{\textwidth}{@{}lY@{}}
+\toprule
+\code{http://localhost:8090/} & Interface web \\
+\code{/ws/etudiants?wsdl}, \code{/ws/entreprises?wsdl}, \code{/ws/offres?wsdl} & Contrats WSDL des services SOAP \\
+\code{/api/candidatures}, \code{/api/notifications}, \code{/api/stages} & Services REST \\
+\code{/api/processus} & API d'orchestration (démarrage, tâches humaines, suivi des instances) \\
+\code{/api/admin/pannes} & Simulateur d'indisponibilité (démonstration) \\
+\code{http://localhost:8025} & Boîte e-mail de test Mailpit (serveur SMTP sur le port 1025) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+La configuration (\code{application.properties}) est surchargeable par propriété système ou variable
+d'environnement (\code{DB\_URL}, \code{SERVER\_PORT}…). Un fichier \code{docker-compose.yml} lance la plateforme avec
+PostgreSQL et Mailpit. Le port par défaut est \code{8090} (8080 étant souvent occupé par Jenkins ou Tomcat) ; \code{-Dserver.port} permet d'en changer.

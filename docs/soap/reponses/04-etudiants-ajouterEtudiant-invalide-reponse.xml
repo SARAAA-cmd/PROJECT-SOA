@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <S:Fault xmlns:ns4="http://www.w3.org/2003/05/soap-envelope">
+      <faultcode>S:Server</faultcode>
+      <faultstring>Données invalides</faultstring>
+      <detail>
+        <ns3:ServiceFault xmlns:ns3="http://stages.universite.com/commun" xmlns:ns2="http://stages.universite.com/etudiants">
+          <code>DONNEES_INVALIDES</code>
+          <message>Données invalides</message>
+          <detail>Le champ 'matricule' est invalide (attendu : lettres majuscules suivies de chiffres, ex. E2026001)</detail>
+          <detail>Le champ 'email' est invalide (attendu : adresse e-mail)</detail>
+          <detail>Le champ 'niveau' doit valoir l'une des valeurs [L1, L2, L3, M1, M2, D]</detail>
+        </ns3:ServiceFault>
+      </detail>
+    </S:Fault>
+  </S:Body>
+</S:Envelope>

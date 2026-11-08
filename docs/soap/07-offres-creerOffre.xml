@@ -1,0 +1,28 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:off="http://stages.universite.com/offres"
+                  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+  <soapenv:Header>
+    <wsse:Security soapenv:mustUnderstand="1">
+      <wsse:UsernameToken>
+        <wsse:Username>admin</wsse:Username>
+        <wsse:Password>Admin@2026</wsse:Password>
+      </wsse:UsernameToken>
+    </wsse:Security>
+  </soapenv:Header>
+  <soapenv:Body>
+    <off:creerOffre>
+      <offre>
+        <entrepriseId>2</entrepriseId>
+        <titre>Analyste fonctionnel junior</titre>
+        <description>Recueil des besoins et rédaction de spécifications.</description>
+        <competencesRequises>UML, BPMN, SQL</competencesRequises>
+        <dureeMois>4</dureeMois>
+        <dateLimite>2027-01-15</dateLimite>
+        <nombrePlaces>2</nombrePlaces>
+        <filieresCiblees>AMOA</filieresCiblees>
+        <niveauMinimum>L3</niveauMinimum>
+        <lieu>Rabat</lieu>
+      </offre>
+    </off:creerOffre>
+  </soapenv:Body>
+</soapenv:Envelope>
