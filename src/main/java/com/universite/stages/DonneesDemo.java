@@ -30,16 +30,16 @@ final class DonneesDemo {
         UtilisateurDao.creer("systeme", AppConfig.get("systeme.password"), Role.SYSTEME, null);
         UtilisateurDao.definirCle("systeme", AppConfig.get("systeme.api-key"));
 
-        // Étudiants du cycle ingénieur (niveaux LMD : L3 = 1re année, M1 = 2e année, M2 = 3e année)
+        // Élèves ingénieurs (INE1 = 1re année, INE2 = 2e année, INE3 = 3e année)
         EtudiantDao etudiants = new EtudiantDao();
-        etudiant(etudiants, "E2026001", "Benali", "Yasmine", "AMOA", "M1", "BPMN, UML, SQL, Java, Gestion de projet", Etudiant.ACTIF, "Rabat");
-        etudiant(etudiants, "E2026002", "Haddad", "Omar", "ASEDS", "M2", "Java, Spring, SOAP, REST, Docker", Etudiant.ACTIF, "Casablanca");
-        etudiant(etudiants, "E2026003", "El Amrani", "Salma", "DATA", "M1", "Python, SQL, Machine Learning", Etudiant.ACTIF, "Fès");
-        etudiant(etudiants, "E2026004", "Alaoui", "Karim", "AMOA", "L3", "UML, SQL, Merise", Etudiant.ACTIF, "Meknès");
-        etudiant(etudiants, "E2026005", "Tazi", "Imane", "ICCN", "M2", "Réseaux, Sécurité, Linux", Etudiant.SUSPENDU, "Tanger");
-        etudiant(etudiants, "E2026006", "Bennani", "Youssef", "SESNum", "M1", "C, Systèmes embarqués, IoT, Python", Etudiant.ACTIF, "Oujda");
-        etudiant(etudiants, "E2026007", "Chraibi", "Hiba", "Cloud & IoT", "M2", "AWS, Kubernetes, Docker, Python", Etudiant.ACTIF, "Kénitra");
-        etudiant(etudiants, "E2026008", "Ouazzani", "Mehdi", "SUD", "M1", "Java, Systèmes distribués, Kafka, Linux", Etudiant.ACTIF, "Agadir");
+        etudiant(etudiants, "E2026001", "Benali", "Yasmine", "AMOA", "INE2", "BPMN, UML, SQL, Java, Gestion de projet", Etudiant.ACTIF, "Rabat");
+        etudiant(etudiants, "E2026002", "Haddad", "Omar", "ASEDS", "INE3", "Java, Spring, SOAP, REST, Docker", Etudiant.ACTIF, "Casablanca");
+        etudiant(etudiants, "E2026003", "El Amrani", "Salma", "DATA", "INE2", "Python, SQL, Machine Learning", Etudiant.ACTIF, "Fès");
+        etudiant(etudiants, "E2026004", "Alaoui", "Karim", "AMOA", "INE1", "UML, SQL, Merise", Etudiant.ACTIF, "Meknès");
+        etudiant(etudiants, "E2026005", "Tazi", "Imane", "ICCN", "INE3", "Réseaux, Sécurité, Linux", Etudiant.SUSPENDU, "Tanger");
+        etudiant(etudiants, "E2026006", "Bennani", "Youssef", "SESNum", "INE2", "C, Systèmes embarqués, IoT, Python", Etudiant.ACTIF, "Oujda");
+        etudiant(etudiants, "E2026007", "Chraibi", "Hiba", "Cloud & IoT", "INE3", "AWS, Kubernetes, Docker, Python", Etudiant.ACTIF, "Kénitra");
+        etudiant(etudiants, "E2026008", "Ouazzani", "Mehdi", "SUD", "INE2", "Java, Systèmes distribués, Kafka, Linux", Etudiant.ACTIF, "Agadir");
         for (int i = 1; i <= 8; i++) {
             String m = "E202600" + i;
             compte(m, "Etudiant@2026", Role.ETUDIANT, m);
@@ -70,26 +70,26 @@ final class DonneesDemo {
         LocalDate j = LocalDate.now();
         offre(offres, atlas, "Assistant chef de projet AMOA", "Recueil des besoins, rédaction des spécifications fonctionnelles et "
                 + "modélisation BPMN des processus métier d'un client bancaire.", "BPMN, UML, SQL, Gestion de projet",
-                6, j.plusDays(30), 2, "AMOA, ASEDS", "M1", "Casablanca", Offre.ACTIVE);
+                6, j.plusDays(30), 2, "AMOA, ASEDS", "INE2", "Casablanca", Offre.ACTIVE);
         offre(offres, atlas, "Développeur Java SOA", "Développement de services web SOAP/REST et intégration dans une "
                 + "architecture orientée services.", "Java, SOAP, REST, Docker", 6, j.plusDays(2), 1,
-                "ASEDS", "M2", "Casablanca", Offre.ACTIVE);
+                "ASEDS", "INE3", "Casablanca", Offre.ACTIVE);
         offre(offres, nova, "Consultant junior en transformation digitale", "Accompagnement de la refonte des processus "
                 + "RH d'une administration : cartographie, indicateurs et conduite du changement.", "BPMN, Gestion de projet, Excel",
-                4, j.plusDays(20), 3, "AMOA", "L3", "Rabat", Offre.ACTIVE);
+                4, j.plusDays(20), 3, "AMOA", "INE1", "Rabat", Offre.ACTIVE);
         offre(offres, fin, "Data analyst – risque de crédit", "Analyse des données de crédit et construction de "
                 + "tableaux de bord de suivi du risque.", "Python, SQL, Power BI", 5, j.plusDays(15), 1,
-                "DATA", "M1", "Casablanca", Offre.ACTIVE);
+                "DATA", "INE2", "Casablanca", Offre.ACTIVE);
         offre(offres, fin, "Business analyst (candidatures closes)", "Offre dont la date limite est dépassée.",
                 "SQL, UML", 3, j.minusDays(5), 2, "", null, "Casablanca", Offre.ACTIVE);
         offre(offres, nonRef, "Stage marketing digital", "Offre d'une entreprise non référencée par l'école.",
                 "SEO", 3, j.plusDays(25), 1, "", null, "Marrakech", Offre.ACTIVE);
         offre(offres, cyber, "Analyste SOC junior", "Surveillance des événements de sécurité, analyse d'alertes et "
                 + "rédaction de rapports d'incidents au sein d'un centre opérationnel de sécurité.", "Réseaux, Sécurité, Linux, SIEM",
-                6, j.plusDays(25), 2, "ICCN, SUD", "M1", "Agadir", Offre.ACTIVE);
+                6, j.plusDays(25), 2, "ICCN, SUD", "INE2", "Agadir", Offre.ACTIVE);
         offre(offres, cloud, "Ingénieur Cloud & IoT – plateforme de télémétrie", "Conception d'une chaîne de collecte de "
                 + "données de capteurs et déploiement sur Kubernetes.", "Python, Docker, Kubernetes, IoT",
-                6, j.plusDays(18), 2, "Cloud & IoT, SESNum", "M1", "Rabat", Offre.ACTIVE);
+                6, j.plusDays(18), 2, "Cloud & IoT, SESNum", "INE2", "Rabat", Offre.ACTIVE);
     }
 
     /** Crée un compte et sa clé d'API de démonstration : stg_demo_<identifiant>. */

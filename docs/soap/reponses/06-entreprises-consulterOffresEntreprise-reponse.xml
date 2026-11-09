@@ -13,7 +13,7 @@
         <nombrePlaces>1</nombrePlaces>
         <placesDisponibles>1</placesDisponibles>
         <filieresCiblees>Génie Logiciel</filieresCiblees>
-        <niveauMinimum>M2</niveauMinimum>
+        <niveauMinimum>INE3</niveauMinimum>
         <lieu>Casablanca</lieu>
         <statut>ACTIVE</statut>
         <datePublication>2026-10-13</datePublication>
@@ -29,7 +29,7 @@
         <nombrePlaces>2</nombrePlaces>
         <placesDisponibles>2</placesDisponibles>
         <filieresCiblees>AMOA, Génie Logiciel</filieresCiblees>
-        <niveauMinimum>M1</niveauMinimum>
+        <niveauMinimum>INE2</niveauMinimum>
         <lieu>Casablanca</lieu>
         <statut>ACTIVE</statut>
         <datePublication>2026-10-13</datePublication>

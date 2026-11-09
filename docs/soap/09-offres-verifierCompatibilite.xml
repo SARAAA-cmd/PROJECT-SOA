@@ -13,7 +13,7 @@
     <off:verifierCompatibilite>
       <offreId>1</offreId>
       <filiere>AMOA</filiere>
-      <niveau>M1</niveau>
+      <niveau>INE2</niveau>
       <competences>BPMN, UML, Java</competences>
     </off:verifierCompatibilite>
   </soapenv:Body>

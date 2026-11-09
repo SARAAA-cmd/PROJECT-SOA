@@ -10,7 +10,7 @@
           <message>Données invalides</message>
           <detail>Le champ 'matricule' est invalide (attendu : lettres majuscules suivies de chiffres, ex. E2026001)</detail>
           <detail>Le champ 'email' est invalide (attendu : adresse e-mail)</detail>
-          <detail>Le champ 'niveau' doit valoir l'une des valeurs [L1, L2, L3, M1, M2, D]</detail>
+          <detail>Le champ 'niveau' doit valoir l'une des valeurs [INE1, INE2, INE3]</detail>
         </ns3:ServiceFault>
       </detail>
     </S:Fault>

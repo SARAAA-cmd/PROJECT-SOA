@@ -34,7 +34,7 @@ public class Etudiant {
     private String adresse;
     @XmlElement(required = true)
     private String filiere;
-    /** L1, L2, L3, M1, M2 ou D. */
+    /** INE1, INE2 ou INE3 (année du cycle ingénieur). */
     @XmlElement(required = true)
     private String niveau;
     /** Compétences séparées par des virgules (ex. "Java, SQL, UML"). */

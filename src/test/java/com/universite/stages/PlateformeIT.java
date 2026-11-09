@@ -128,11 +128,11 @@ class PlateformeIT {
             e.setPrenom("Alice");
             e.setEmail("alice.test@etu.universite.example");
             e.setFiliere("AMOA");
-            e.setNiveau("M1");
+            e.setNiveau("INE2");
             assertEquals("ACTIF", s.ajouterEtudiant(e).getStatut());
             assertEquals("Alice", s.consulterEtudiant("E2026099").getPrenom());
-            e.setNiveau("M2");
-            assertEquals("M2", s.modifierEtudiant(e).getNiveau());
+            e.setNiveau("INE3");
+            assertEquals("INE3", s.modifierEtudiant(e).getNiveau());
             assertTrue(s.supprimerEtudiant("E2026099"));
             ServiceException ex = assertThrows(ServiceException.class, () -> s.consulterEtudiant("E2026099"));
             assertEquals(ServiceException.INTROUVABLE, ex.getFaultInfo().getCode());
@@ -233,13 +233,13 @@ class PlateformeIT {
         @DisplayName("ST-10 Compatibilité offre / profil : filière, niveau, date limite et score de compétences")
         void compatibilite() throws ServiceException {
             OffreService s = SoapClients.offres(ADMIN, ADMIN_PWD);
-            Compatibilite ok = s.verifierCompatibilite(1, "AMOA", "M2", "BPMN, uml");
+            Compatibilite ok = s.verifierCompatibilite(1, "AMOA", "INE3", "BPMN, uml");
             assertTrue(ok.isCompatible());
             assertEquals(50, ok.getScoreCompetences());
-            Compatibilite ko = s.verifierCompatibilite(1, "DATA", "L3", "");
+            Compatibilite ko = s.verifierCompatibilite(1, "DATA", "INE1", "");
             assertFalse(ko.isCompatible());
             assertEquals(2, ko.getMotifs().size());
-            Compatibilite expiree = s.verifierCompatibilite(5, "AMOA", "M1", "");
+            Compatibilite expiree = s.verifierCompatibilite(5, "AMOA", "INE2", "");
             assertFalse(expiree.isDateLimiteRespectee());
             assertFalse(expiree.isCompatible());
         }

@@ -6,6 +6,8 @@
   --bord: #e3e7ef;
   --marine: #0b2545;
   --ciel: #4cc9f0;
+  --inpt: #007bc7;
+  --inpt-clair: #eaf4fb;
   --largeur: 1320px;
   --primaire: #0f2c59;
   --primaire-clair: #e7edf7;
@@ -49,11 +51,11 @@ textarea { min-height: 90px; resize: vertical; }
 
 /* ---------- Mise en page : barre de navigation supérieure ---------- */
 .app { min-height: 100vh; }
-.barre-haut { position: sticky; top: 0; z-index: 15; background: var(--marine); color: #cfd8ea; box-shadow: 0 2px 10px rgba(11, 37, 69, .25); }
+.barre-haut { position: sticky; top: 0; z-index: 15; background: #fff; color: #4a5470; border-bottom: 1px solid var(--bord); box-shadow: 0 2px 12px rgba(11, 37, 69, .06); }
 .barre-haut-interieur { max-width: var(--largeur); margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 20px; }
-.barre-haut .logo { color: #fff; flex: none; }
-.logo .logo-badge { display: flex; align-items: center; background: #fff; border-radius: 8px; padding: 6px 9px; height: auto; min-width: 0; }
-.logo-badge img { height: 26px; width: auto; display: block; }
+.barre-haut .logo { color: var(--marine); flex: none; }
+.logo .logo-badge { display: flex; align-items: center; background: none; border-radius: 0; padding: 0; height: auto; min-width: 0; }
+.logo-badge img { height: 32px; width: auto; display: block; }
 .logo-connexion { display: block; width: 260px; max-width: 80%; height: auto; margin: 0 auto 18px; }
 .titre-connexion { text-align: center; color: var(--marine); font-size: 1.25rem; margin: 0; }
 .connexion-carte .sous-titre { text-align: center; }
@@ -63,19 +65,19 @@ textarea { min-height: 90px; resize: vertical; }
 #menu > :last-child { margin-right: auto; }
 #menu button { all: unset; cursor: pointer; padding: 0 16px; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-weight: 600; font-size: .92rem;
   border-bottom: 3px solid transparent; border-top: 3px solid transparent; transition: background .15s, color .15s; }
-#menu button:hover { color: #fff; background: rgba(255, 255, 255, .06); }
-#menu button:focus-visible { outline: 2px solid var(--ciel); outline-offset: -4px; }
-#menu button.actif { color: #fff; background: rgba(255, 255, 255, .09); border-bottom-color: var(--ciel); }
+#menu button:hover { color: var(--marine); background: #f3f6fb; }
+#menu button:focus-visible { outline: 2px solid var(--inpt); outline-offset: -4px; }
+#menu button.actif { color: var(--inpt); background: var(--inpt-clair); border-bottom-color: var(--inpt); }
 #menu .pastille { background: #e25555; color: #fff; border-radius: 99px; font-size: .72rem; padding: 0 7px; line-height: 1.5; }
 .profil { position: relative; flex: none; }
 .profil summary { list-style: none; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 10px; border-radius: 10px; }
 .profil summary::-webkit-details-marker { display: none; }
-.profil summary:hover, .profil[open] summary { background: rgba(255, 255, 255, .08); }
-.avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--ciel); color: var(--marine); font-weight: 700; font-size: .8rem; }
+.profil summary:hover, .profil[open] summary { background: #f3f6fb; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--marine); color: #fff; font-weight: 700; font-size: .8rem; }
 .profil-texte { display: grid; line-height: 1.2; }
-#profil-nom { color: #fff; font-weight: 600; font-size: .9rem; }
-#profil-role { color: #9fb3d6; font-size: .78rem; }
-.chevron { font-size: .8rem; color: #9fb3d6; }
+#profil-nom { color: var(--texte); font-weight: 600; font-size: .9rem; }
+#profil-role { color: var(--muted); font-size: .78rem; }
+.chevron { font-size: .8rem; color: var(--muted); }
 .profil-menu { position: absolute; right: 0; top: calc(100% + 8px); min-width: 210px; background: #fff; border: 1px solid var(--bord); border-radius: 12px;
   box-shadow: 0 10px 30px rgba(11, 37, 69, .18); padding: 6px; display: grid; }
 .profil-menu button { all: unset; cursor: pointer; padding: 9px 12px; border-radius: 8px; color: var(--texte); font-size: .9rem; }
@@ -181,8 +183,7 @@ tr.cliquable:hover td { background: #fafbff; }
 }
 @media (max-width: 640px) {
   .barre-haut .logo { font-size: 0; gap: 0; }
-  .logo .logo-badge { padding: 5px 7px; }
-  .logo-badge img { height: 22px; }
+  .logo-badge img { height: 26px; }
   main { padding: 18px 14px 40px; }
   .deux-colonnes { grid-template-columns: 1fr; }
 }

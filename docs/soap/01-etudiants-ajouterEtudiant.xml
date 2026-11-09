@@ -18,7 +18,7 @@
         <email>salma.bennani@etu.universite.example</email>
         <telephone>+212 6 11 22 33 44</telephone>
         <filiere>AMOA</filiere>
-        <niveau>M1</niveau>
+        <niveau>INE2</niveau>
         <competences>BPMN, UML, SQL</competences>
       </etudiant>
     </etu:ajouterEtudiant>

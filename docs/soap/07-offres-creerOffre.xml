@@ -20,7 +20,7 @@
         <dateLimite>2027-01-15</dateLimite>
         <nombrePlaces>2</nombrePlaces>
         <filieresCiblees>AMOA</filieresCiblees>
-        <niveauMinimum>L3</niveauMinimum>
+        <niveauMinimum>INE1</niveauMinimum>
         <lieu>Rabat</lieu>
       </offre>
     </off:creerOffre>

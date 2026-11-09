@@ -494,7 +494,7 @@ async function formulaireOffre(entrepriseId) {
       <label>Date limite<input name="dateLimite" type="date" value="${limite}" required></label>
       <label>Lieu<input name="lieu"></label>
       <label>Filières ciblées<input name="filieresCiblees" placeholder="AMOA, Génie Logiciel"></label>
-      <label>Niveau minimum<select name="niveauMinimum"><option value="">—</option>${['L1', 'L2', 'L3', 'M1', 'M2'].map((n) => `<option>${n}</option>`).join('')}</select></label>
+      <label>Niveau minimum<select name="niveauMinimum"><option value="">—</option>${['INE1', 'INE2', 'INE3'].map((n) => `<option>${n}</option>`).join('')}</select></label>
       <div><button class="btn primaire" type="submit">Publier (SOAP creerOffre)</button></div>
     </form>`);
   $('#f-offre', m).addEventListener('submit', (e) => {
@@ -664,7 +664,7 @@ function formulaireEtudiant(e) {
       <label>Prénom<input name="prenom" required value="${esc(e?.prenom || '')}"></label>
       <label>Nom<input name="nom" required value="${esc(e?.nom || '')}"></label>
       <label>Filière<input name="filiere" required value="${esc(e?.filiere || '')}"></label>
-      <label>Niveau<select name="niveau">${['L1', 'L2', 'L3', 'M1', 'M2', 'D'].map((n) => `<option ${n === e?.niveau ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label>Niveau<select name="niveau">${['INE1', 'INE2', 'INE3'].map((n) => `<option ${n === e?.niveau ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
       <label>Téléphone<input name="telephone" value="${esc(e?.telephone || '')}"></label>
       <label>Adresse<input name="adresse" value="${esc(e?.adresse || '')}"></label>
       <label style="grid-column:1/-1">Compétences<input name="competences" value="${esc(e?.competences || '')}"></label>

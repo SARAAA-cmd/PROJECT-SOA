@@ -146,4 +146,10 @@ CREATE TABLE IF NOT EXISTS evaluation (
     note          DECIMAL(4,2)  NOT NULL,
     appreciation  VARCHAR(2000),
     date_evaluation TIMESTAMP   NOT NULL
-)
+);
+
+-- Migration : niveaux LMD -> années du cycle ingénieur INPT (sans effet sur une base déjà migrée)
+UPDATE etudiant SET niveau = CASE WHEN niveau IN ('L1', 'L2', 'L3') THEN 'INE1' WHEN niveau = 'M1' THEN 'INE2' ELSE 'INE3' END
+    WHERE niveau IN ('L1', 'L2', 'L3', 'M1', 'M2', 'D');
+UPDATE offre SET niveau_minimum = CASE WHEN niveau_minimum IN ('L1', 'L2', 'L3') THEN 'INE1' WHEN niveau_minimum = 'M1' THEN 'INE2' ELSE 'INE3' END
+    WHERE niveau_minimum IN ('L1', 'L2', 'L3', 'M1', 'M2', 'D');

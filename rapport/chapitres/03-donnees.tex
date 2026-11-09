@@ -41,7 +41,7 @@ serait avec des bases physiquement séparées.
 \textbf{Attribut} & \textbf{Valeurs} \\
 \midrule
 Statut étudiant & \code{ACTIF}, \code{SUSPENDU}, \code{EN\_STAGE}, \code{DIPLOME} \\
-Niveau d'études (ordonné) & \code{L1} < \code{L2} < \code{L3} < \code{M1} < \code{M2} < \code{D} \\
+Année du cycle ingénieur (ordonnée) & \code{INE1} < \code{INE2} < \code{INE3} \\
 Statut d'offre & \code{ACTIVE}, \code{SUSPENDUE}, \code{POURVUE}, \code{CLOTUREE} \\
 Statut de candidature & \code{DEPOSEE}, \code{EN\_COURS\_EVALUATION}, \code{ACCEPTEE}, \code{REFUSEE}, \code{ANNULEE} \\
 Statut de stage & \code{PLANIFIE}, \code{EN\_COURS}, \code{TERMINE}, \code{INTERROMPU} \\
@@ -56,8 +56,8 @@ Rôle utilisateur & \code{RESPONSABLE}, \code{ETUDIANT}, \code{ENTREPRISE}, \cod
 
 \section{Jeu de données de démonstration}
 Le jeu de démonstration reprend le contexte de l'INPT : 8 élèves ingénieurs des filières
-\textbf{AMOA, ASEDS, DATA, ICCN, SESNum, SUD} et \textbf{Cloud \& IoT} (les niveaux suivent la notation LMD :
-L3 = 1\textsuperscript{re} année, M1 = 2\textsuperscript{e} année, M2 = 3\textsuperscript{e} année), dont une élève
+\textbf{AMOA, ASEDS, DATA, ICCN, SESNum, SUD} et \textbf{Cloud \& IoT} (niveaux notés comme à l'INPT :
+INE1, INE2 et INE3 pour les trois années du cycle ingénieur), dont une élève
 suspendue ; 6 entreprises fictives implantées à Casablanca, Rabat, Agadir et Marrakech (dont une non référencée) ;
 8 offres, dont une à date limite dépassée et une d'entreprise non référencée. Chaque compte reçoit une clé d'API de
 démonstration (annexe~\ref{annexe:comptes}). Ce jeu couvre volontairement tous les cas de rejet du processus.
