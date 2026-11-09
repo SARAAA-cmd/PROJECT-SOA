@@ -98,6 +98,8 @@ main { max-width: var(--largeur); margin: 0 auto; padding: 28px 24px 60px; min-w
 .btn:hover { border-color: var(--primaire); }
 .btn.primaire { background: var(--primaire); border-color: var(--primaire); color: #fff; }
 .btn.primaire:hover { filter: brightness(1.08); }
+/* Boutons « Postuler » : bleu exact du logo INPT */
+.btn.primaire.postuler { background: var(--inpt); border-color: var(--inpt); }
 .btn.succes { background: var(--succes); border-color: var(--succes); color: #fff; }
 .btn.danger { background: #fff; border-color: #9ca3af; color: #374151; }
 .btn.lien { border: 0; background: none; color: #9fb0e8; padding: 4px 0; }
@@ -109,7 +111,7 @@ main { max-width: var(--largeur); margin: 0 auto; padding: 28px 24px 60px; min-w
 .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 18px; box-shadow: var(--ombre); }
 .carte h3 { margin-bottom: 4px; }
 .carte .pied { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 8px; flex-wrap: wrap; }
-.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); font-size: .85rem; margin: 6px 0 10px; }
+.meta { display: flex; flex-wrap: wrap; gap: 2px 18px; color: var(--muted); font-size: .85rem; margin: 6px 0 10px; }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .tag { background: #f0f2f7; border-radius: 6px; padding: 2px 8px; font-size: .8rem; }
 .tag.ok { background: var(--succes-clair); color: var(--succes); }

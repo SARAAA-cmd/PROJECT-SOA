@@ -244,15 +244,15 @@ VUES.offres = async (racine, u) => {
       const c = compat[i];
       return `<div class="carte">
         <h3>${esc(o.titre)}</h3>
-        <div class="meta"><span>🏢 ${esc(noms[i])}</span><span>📍 ${esc(o.lieu || '—')}</span><span>⏱ ${o.dureeMois} mois</span>
-          <span>📅 avant le ${date(o.dateLimite)}</span><span>👥 ${o.placesDisponibles} place(s)</span></div>
+        <div class="meta"><span>${esc(noms[i])}</span><span>${esc(o.lieu || '—')}</span><span>${o.dureeMois} mois</span>
+          <span>avant le ${date(o.dateLimite)}</span><span>${o.placesDisponibles} place(s)</span></div>
         <p>${esc(o.description)}</p>
         <div class="tags">${competences(o.competencesRequises).map((k) => `<span class="tag ${mesComp.has(norm(k)) ? 'ok' : ''}">${esc(k)}</span>`).join('')}</div>
         ${c ? `<div class="score" style="margin-top:12px">Adéquation compétences <div class="jauge"><div style="width:${c.scoreCompetences}%"></div></div> ${c.scoreCompetences}%</div>
           ${c.compatible ? '' : `<div class="encart ko">${liste(c.motif).map(esc).join('<br>')}</div>`}` : ''}
         <div class="pied"><span class="muted">Niveau min. ${esc(o.niveauMinimum || '—')} · ${esc(o.filieresCiblees || 'toutes filières')}</span>
           ${dejaPostule.has(o.id) ? '<span class="badge b-DEPOSEE">Candidature envoyée</span>'
-            : `<button class="btn primaire" data-postuler="${o.id}">Postuler</button>`}</div>
+            : `<button class="btn primaire postuler" data-postuler="${o.id}">Postuler</button>`}</div>
       </div>`;
     }).join('') || '<div class="vide">Aucune offre disponible</div>'}</div>`;
 
@@ -340,7 +340,7 @@ VUES.stage = async (racine, u) => {
 function carteStage(s, st, h) {
   return `<div class="carte" style="margin-bottom:16px">
     <div class="pied" style="margin-top:0"><h2>${esc(s.titreOffre)}</h2>${badge(s.statut)}</div>
-    <div class="meta"><span>🏢 ${esc(s.nomEntreprise)}</span><span>👤 ${esc(s.nomEtudiant)}</span><span>📅 ${date(s.dateDebut)} → ${date(s.dateFin)}</span>
+    <div class="meta"><span>${esc(s.nomEntreprise)}</span><span>${esc(s.nomEtudiant)}</span><span>${date(s.dateDebut)} → ${date(s.dateFin)}</span>
       <span>Tuteur : ${esc(s.tuteurEntreprise || '—')}</span></div>
     ${st ? `<div class="score">Progression <div class="jauge"><div style="width:${st.progression}%"></div></div> ${st.progression}% · ${st.joursRestants} j restants</div>` : ''}
     ${h && h.moyenne ? `<p>Moyenne des évaluations : <strong>${h.moyenne}/20</strong></p>` : ''}
@@ -387,7 +387,7 @@ VUES.notifications = async (racine) => {
   if (!ns.length) { racine.innerHTML = '<div class="vide">Aucune notification</div>'; return; }
   racine.innerHTML = `<div class="carte" style="padding:0">${ns.map((n) => `
     <div class="notif ${n.lue ? '' : 'non-lue'}" data-id="${n.id}">
-      <div class="icone">${n.type.startsWith('REFUS') || n.type.startsWith('REJET') || n.type.startsWith('INCIDENT') ? '!' : '✉'}</div>
+      <div class="icone">${n.type.startsWith('REFUS') || n.type.startsWith('REJET') || n.type.startsWith('INCIDENT') ? '!' : 'i'}</div>
       <div><strong>${esc(n.sujet)}</strong> <span class="muted">· ${dateHeure(n.dateEnvoi)} · ${esc(n.email || '')}</span>
       <pre>${esc(n.message)}</pre></div></div>`).join('')}</div>`;
   $$('.notif.non-lue', racine).forEach((d) => d.addEventListener('click', async () => {
@@ -406,7 +406,7 @@ VUES.evaluations = async (racine, u) => {
     const c = t.contexte; const p = profils[i];
     return `<div class="carte">
       <div class="pied" style="margin-top:0"><h3>${esc(c.nomEtudiant)}</h3><span class="muted">Candidature n°${c.candidatureId}</span></div>
-      <div class="meta"><span>🎯 ${esc(c.titreOffre)}</span>${p ? `<span>🎓 ${esc(p.filiere)} ${esc(p.niveau)}</span>` : ''}<span>reçue ${dateHeure(t.creeLe)}</span></div>
+      <div class="meta"><span>${esc(c.titreOffre)}</span>${p ? `<span>${esc(p.filiere)} ${esc(p.niveau)}</span>` : ''}<span>reçue ${dateHeure(t.creeLe)}</span></div>
       ${p ? `<div class="tags">${competences(p.competences).map((k) => `<span class="tag">${esc(k)}</span>`).join('')}</div>` : ''}
       <div class="score" style="margin-top:10px">Adéquation <div class="jauge"><div style="width:${c.scoreCompatibilite || 0}%"></div></div> ${c.scoreCompatibilite ?? 0}%</div>
       <p style="white-space:pre-wrap">${esc((c.lettreMotivation || '').slice(0, 280))}${(c.lettreMotivation || '').length > 280 ? '…' : ''}</p>
@@ -621,7 +621,7 @@ async function detailInstance(pid) {
 
 VUES.incidents = async (racine) => {
   const taches = (await Api.get('/processus/taches')).filter((t) => t.type === 'traiterIncident');
-  if (!taches.length) { racine.innerHTML = '<div class="vide">Aucun incident en attente. 🎉</div>'; return; }
+  if (!taches.length) { racine.innerHTML = '<div class="vide">Aucun incident en attente.</div>'; return; }
   racine.innerHTML = `<div class="grille">${taches.map((t) => `<div class="carte">
     <h3>Incident — ${esc(t.contexte.nomEtudiant || t.contexte.matricule)}</h3>
     <div class="meta"><span>Instance #${esc(t.processInstanceId)}</span><span>Étape : <strong>${esc(t.contexte.etapeCourante)}</strong></span><span>${dateHeure(t.creeLe)}</span></div>
