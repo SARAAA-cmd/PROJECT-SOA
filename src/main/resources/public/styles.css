@@ -96,11 +96,9 @@ main { max-width: var(--largeur); margin: 0 auto; padding: 28px 24px 60px; min-w
 /* ---------- Composants ---------- */
 .btn { border: 1px solid var(--bord); background: #fff; color: var(--texte); padding: 8px 14px; border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600; font-size: .9rem; }
 .btn:hover { border-color: var(--primaire); }
-.btn.primaire { background: var(--primaire); border-color: var(--primaire); color: #fff; }
-.btn.primaire:hover { filter: brightness(1.08); }
-/* Boutons « Postuler » : bleu exact du logo INPT */
-.btn.primaire.postuler { background: var(--inpt); border-color: var(--inpt); }
-.btn.succes { background: var(--succes); border-color: var(--succes); color: #fff; }
+/* Règle de design : toute action principale utilise le bleu exact du logo INPT (#007BC7), sur toutes les interfaces */
+.btn.primaire, .btn.succes { background: var(--inpt); border-color: var(--inpt); color: #fff; }
+.btn.primaire:hover, .btn.succes:hover { background: var(--inpt); border-color: var(--inpt); box-shadow: 0 0 0 3px rgba(0, 123, 199, .22); }
 .btn.danger { background: #fff; border-color: #9ca3af; color: #374151; }
 .btn.lien { border: 0; background: none; color: #9fb0e8; padding: 4px 0; }
 .btn.large { width: 100%; padding: 11px; }
