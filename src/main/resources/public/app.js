@@ -39,15 +39,22 @@ const Api = (() => {
     const entetes = { Accept: 'application/json', 'X-Requested-With': 'fetch' };
     if (s) entetes.Authorization = 'Basic ' + btoa(unescape(encodeURIComponent(`${s.username}:${s.password}`)));
     if (corps !== undefined) entetes['Content-Type'] = 'application/json';
-    const r = await fetch('/api' + chemin, { method: methode, headers: entetes, body: corps === undefined ? undefined : JSON.stringify(corps) });
+    const service = chemin.split('/')[1].split('?')[0];
+    let r;
+    try {
+      r = await fetch('/api' + chemin, { method: methode, headers: entetes, body: corps === undefined ? undefined : JSON.stringify(corps) });
+    } catch (e) {
+      throw new ErreurApplication({ statut: 0, code: 'RESEAU', service, message: `${methode} /api${chemin} : ${e.message}` });
+    }
     const texte = await r.text();
     let json = null;
     try { json = texte ? JSON.parse(texte) : null; } catch (e) { json = texte; }
     if (!r.ok) {
-      const msg = json && json.message ? json.message + (json.details ? ' : ' + json.details.join(' ; ') : '') : `Erreur HTTP ${r.status}`;
-      const err = new Error(msg);
-      err.status = r.status;
-      throw err;
+      const corpsErreur = json && typeof json === 'object' ? json : {};
+      throw new ErreurApplication({
+        statut: r.status, code: corpsErreur.code || null, service, details: corpsErreur.details || [],
+        message: corpsErreur.message || `${methode} /api${chemin} : HTTP ${r.status}`,
+      });
     }
     return json;
   }
@@ -114,7 +121,7 @@ function tableau(colonnes, lignes, { vide = 'Aucun élément', clic } = {}) {
 function lierClics(racine, lignes, fn) {
   $$('tr.cliquable', racine).forEach((tr) => tr.addEventListener('click', (e) => {
     if (e.target.closest('button, select, a')) return;
-    fn(lignes[Number(tr.dataset.index)]);
+    Promise.resolve(fn(lignes[Number(tr.dataset.index)])).catch((err) => toast(signalerErreur(err, 'chargement'), 'ko'));
   }));
 }
 
@@ -124,9 +131,29 @@ function formulaire(form) {
   return o;
 }
 
+/**
+ * Point unique d'affichage des erreurs : message adapté au rôle (getMessageUtilisateur, erreurs.js) ;
+ * une session expirée ramène à l'écran de connexion.
+ */
+function signalerErreur(e, contexte = 'action') {
+  const u = Auth.utilisateur();
+  const message = getMessageUtilisateur(e, u && u.role, contexte);
+  if (u && typeErreur(e) === 'session') finSession(message);
+  return message;
+}
+
+function finSession(message) {
+  Auth.deconnecter();
+  try { sessionStorage.removeItem('vue'); } catch (e) { /* ignoré */ }
+  Modale.fermer();
+  $('#app').hidden = true;
+  $('#ecran-connexion').hidden = false;
+  $('#erreur-connexion').textContent = message;
+}
+
 async function action(bouton, fn) {
   if (bouton) bouton.disabled = true;
-  try { return await fn(); } catch (e) { toast(e.message, 'ko'); return undefined; } finally { if (bouton) bouton.disabled = false; }
+  try { return await fn(); } catch (e) { toast(signalerErreur(e), 'ko'); return undefined; } finally { if (bouton) bouton.disabled = false; }
 }
 
 // Cache des entreprises (noms) — service SOAP Entreprises
@@ -168,7 +195,7 @@ async function afficher(vue) {
     await VUES[vue](racine, u);
     racine.dataset.charge = vue;
   } catch (e) {
-    racine.innerHTML = `<div class="encart ko">${esc(e.message)}</div>`;
+    racine.innerHTML = `<div class="encart ko">${esc(signalerErreur(e, 'chargement'))}</div>`;
     racine.dataset.charge = vue;
   }
   rafraichirPastilles();
@@ -260,7 +287,7 @@ VUES.offres = async (racine, u) => {
     const o = offres.find((x) => String(x.id) === b.dataset.postuler);
     const m = Modale.ouvrir(`
       <h2>Postuler : ${esc(o.titre)}</h2>
-      <p class="muted">Votre candidature déclenche le processus BPMN de traitement : vérifications (SOAP), enregistrement (REST), puis transmission à l'entreprise.</p>
+      <p class="muted">Votre dossier sera vérifié, puis transmis à l'entreprise. Vous serez informé(e) de chaque étape par e-mail.</p>
       <form id="f-postuler">
         <label>Lettre de motivation<textarea name="lettreMotivation" required maxlength="4000">Madame, Monsieur,\n\nVotre offre « ${esc(o.titre)} » correspond pleinement à mon projet professionnel…</textarea></label>
         <label>Lien vers le CV<input name="cvUrl" type="url" placeholder="https://…" value="https://cv.example/${esc(u.refId)}.pdf"></label>
@@ -275,7 +302,8 @@ VUES.offres = async (racine, u) => {
         if (r.statut === 'REJETEE') {
           res.innerHTML = `<div class="encart ko"><strong>Candidature non recevable.</strong><br>${esc(v.motifRejet)}</div>`;
         } else if (r.statut === 'INCIDENT_TECHNIQUE') {
-          res.innerHTML = '<div class="encart attention"><strong>Incident technique.</strong> Un service est momentanément indisponible ; le responsable des stages a été alerté et relancera le traitement.</div>';
+          const retard = new ErreurApplication({ statut: 503, code: 'SERVICE_INDISPONIBLE', message: `Incident du processus #${r.processInstanceId} (détail : vue Incidents)` });
+          res.innerHTML = `<div class="encart info">${esc(getMessageUtilisateur(retard, 'ETUDIANT', 'candidature'))}</div>`;
         } else {
           res.innerHTML = `<div class="encart ok"><strong>Candidature n°${v.candidatureId} enregistrée</strong> et transmise à ${esc(v.entreprise)}. Vous serez notifié(e) de la décision.</div>`;
         }
@@ -303,13 +331,23 @@ async function detailCandidature(c) {
   const u = Auth.utilisateur();
   const hist = await Api.get(`/candidatures/${c.id}/historique`);
   const modifiable = ['DEPOSEE', 'EN_COURS_EVALUATION'].includes(c.statut);
+  let suivi;
+  if (u.role === 'RESPONSABLE') {
+    // supervision : historique complet et accès au diagramme BPMN de l'instance
+    suivi = `<h3>Historique</h3>
+    <ul class="chronologie">${hist.map((h) => `<li><strong>${esc(LIBELLES[h.nouveauStatut] || h.nouveauStatut)}</strong>
+      ${h.commentaire ? `— ${esc(h.commentaire)}` : ''}<div class="quand">${dateHeure(h.date)} · ${esc(h.auteur)}</div></li>`).join('')}</ul>
+    ${c.processInstanceId ? `<button class="btn" id="b-instance">Voir l'exécution du processus (BPMN)</button>` : ''}`;
+  } else {
+    // étudiant / entreprise : chronologie en langage simple, sans diagramme ni détail technique
+    const instance = c.processInstanceId ? await Api.get(`/processus/instances/${c.processInstanceId}`).catch((e) => { journaliserErreur(e); return null; }) : null;
+    suivi = `<h3>Suivi de la candidature</h3>${rendreSuivi(calculerSuivi(c, hist, instance, u.role))}`;
+  }
   const m = Modale.ouvrir(`
     <h2>Candidature n°${c.id} ${badge(c.statut)}</h2>
     <p><strong>${esc(c.titreOffre)}</strong> — ${esc(c.nomEtudiant)} (${esc(c.matricule)})</p>
     <p class="muted">CV : ${c.cvUrl ? `<a href="${esc(c.cvUrl)}" target="_blank" rel="noopener">${esc(c.cvUrl)}</a>` : '—'}</p>
-    <h3>Historique</h3>
-    <ul class="chronologie">${hist.map((h) => `<li><strong>${esc(LIBELLES[h.nouveauStatut] || h.nouveauStatut)}</strong>
-      ${h.commentaire ? `— ${esc(h.commentaire)}` : ''}<div class="quand">${dateHeure(h.date)} · ${esc(h.auteur)}</div></li>`).join('')}</ul>
+    ${suivi}
     ${u.role === 'ETUDIANT' && modifiable ? `
       <h3>Compléter mon dossier</h3>
       <form id="f-completer">
@@ -319,6 +357,7 @@ async function detailCandidature(c) {
         ${c.statut === 'DEPOSEE' ? '<button class="btn danger" type="button" id="b-annuler">Annuler la candidature</button>' : ''}</div>
         ${c.statut === 'DEPOSEE' ? '' : '<p class="muted">L\'entreprise examine votre dossier : la candidature ne peut plus être annulée.</p>'}
       </form>` : ''}`);
+  $('#b-instance', m)?.addEventListener('click', () => detailInstance(c.processInstanceId).catch((e) => toast(signalerErreur(e), 'ko')));
   $('#f-completer', m)?.addEventListener('submit', (e) => {
     e.preventDefault();
     action(e.submitter, async () => { await Api.patch(`/candidatures/${c.id}`, formulaire(e.target)); toast('Dossier complété', 'ok'); Modale.fermer(); afficher(vueCourante); });
@@ -391,9 +430,11 @@ VUES.notifications = async (racine) => {
       <div><strong>${esc(n.sujet)}</strong> <span class="muted">· ${dateHeure(n.dateEnvoi)} · ${esc(n.email || '')}</span>
       <pre>${esc(n.message)}</pre></div></div>`).join('')}</div>`;
   $$('.notif.non-lue', racine).forEach((d) => d.addEventListener('click', async () => {
-    await Api.patch(`/notifications/${d.dataset.id}/lue`);
-    d.classList.remove('non-lue');
-    rafraichirPastilles();
+    try {
+      await Api.patch(`/notifications/${d.dataset.id}/lue`);
+      d.classList.remove('non-lue');
+      rafraichirPastilles();
+    } catch (e) { toast(signalerErreur(e), 'ko'); }
   }));
 };
 
@@ -443,7 +484,8 @@ VUES.evaluations = async (racine, u) => {
         Modale.fermer();
         toast(r.statut === 'ACCEPTEE' ? `Candidature acceptée — dossier de stage n°${r.variables.stageId} créé`
           : r.statut === 'REFUSEE' ? 'Candidature refusée, étudiant notifié'
-            : r.statut === 'INCIDENT_TECHNIQUE' ? 'Incident technique : le responsable a été alerté' : 'Demande de complément envoyée', r.statut === 'INCIDENT_TECHNIQUE' ? 'ko' : 'ok');
+            : r.statut === 'INCIDENT_TECHNIQUE' ? "Votre décision a bien été enregistrée. Sa prise en compte prend un peu plus de temps que prévu ; l'étudiant sera informé automatiquement."
+              : 'Demande de complément envoyée', 'ok');
         afficher('evaluations');
       });
     });
@@ -495,7 +537,7 @@ async function formulaireOffre(entrepriseId) {
       <label>Lieu<input name="lieu"></label>
       <label>Filières ciblées<input name="filieresCiblees" placeholder="AMOA, Génie Logiciel"></label>
       <label>Niveau minimum<select name="niveauMinimum"><option value="">—</option>${['INE1', 'INE2', 'INE3'].map((n) => `<option>${n}</option>`).join('')}</select></label>
-      <div><button class="btn primaire" type="submit">Publier (SOAP creerOffre)</button></div>
+      <div><button class="btn primaire" type="submit">${entrepriseId ? "Publier l'offre" : "Publier l'offre (SOAP creerOffre)"}</button></div>
     </form>`);
   $('#f-offre', m).addEventListener('submit', (e) => {
     e.preventDefault();
@@ -624,8 +666,14 @@ VUES.incidents = async (racine) => {
   if (!taches.length) { racine.innerHTML = '<div class="vide">Aucun incident en attente.</div>'; return; }
   racine.innerHTML = `<div class="grille">${taches.map((t) => `<div class="carte">
     <h3>Incident — ${esc(t.contexte.nomEtudiant || t.contexte.matricule)}</h3>
-    <div class="meta"><span>Instance #${esc(t.processInstanceId)}</span><span>Étape : <strong>${esc(t.contexte.etapeCourante)}</strong></span><span>${dateHeure(t.creeLe)}</span></div>
-    <div class="encart ko">${esc(t.contexte.messageErreur)}</div>
+    <div class="meta"><span>Instance #${esc(t.processInstanceId)}</span><span>${dateHeure(t.creeLe)}</span></div>
+    <table class="detail-technique">
+      <tr><td>Étape BPMN</td><td><strong>${esc(t.contexte.etapeCourante || '—')}</strong>${t.contexte.activiteEnErreur ? ` · activité <code>${esc(t.contexte.activiteEnErreur)}</code>` : ''}</td></tr>
+      <tr><td>Service concerné</td><td>${esc(t.contexte.serviceEnErreur || '—')}</td></tr>
+      <tr><td>Tentatives</td><td>${t.contexte.tentativesEffectuees ? `${esc(t.contexte.tentativesEffectuees)} (reprise automatique épuisée)` : '—'}</td></tr>
+      <tr><td>Survenu le</td><td>${t.contexte.dateErreur ? dateHeure(t.contexte.dateErreur) : '—'}</td></tr>
+    </table>
+    <div class="encart ko"><strong>Message d'origine</strong><br>${esc(t.contexte.messageErreur)}</div>
     <div class="pied"><button class="btn" data-voir="${t.processInstanceId}">Voir l'instance</button>
       <div class="btn-groupe"><button class="btn danger" data-incident="${t.id}" data-action="ABANDONNER">Abandonner</button>
       <button class="btn succes" data-incident="${t.id}" data-action="RELANCER">Relancer l'étape</button></div></div></div>`).join('')}</div>`;
@@ -793,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await Auth.connecter(f.username, f.password);
       demarrerApplication();
     } catch (err) {
-      $('#erreur-connexion').textContent = err.status === 401 ? 'Identifiant ou mot de passe incorrect' : err.message;
+      $('#erreur-connexion').textContent = getMessageUtilisateur(err, null, 'connexion');
     }
   });
   $$('.comptes-demo button').forEach((b) => b.addEventListener('click', () => {
@@ -811,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="muted">À transmettre dans l'en-tête <code>X-API-Key</code> des appels REST (Postman, scripts).
         Elle ne sera plus affichée : conservez-la.</p>
         <pre style="background:#f4f6fb;padding:12px;border-radius:8px;user-select:all;white-space:pre-wrap;word-break:break-all">${esc(r.cleApi)}</pre>`);
-    } catch (e) { toast(e.message, 'ko'); }
+    } catch (e) { toast(signalerErreur(e), 'ko'); }
   });
   $('#btn-deconnexion').addEventListener('click', () => {
     Auth.deconnecter();

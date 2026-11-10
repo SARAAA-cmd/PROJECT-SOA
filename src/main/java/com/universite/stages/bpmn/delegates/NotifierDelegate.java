@@ -20,6 +20,9 @@ import java.util.Map;
  */
 public class NotifierDelegate extends AbstractServiceDelegate {
 
+    static final String MOTIF_INCIDENT = "Vous pouvez déposer à nouveau votre candidature ; "
+            + "le bureau des stages reste à votre disposition pour toute question.";
+
     private Expression type;
     private Expression destinataire;
 
@@ -33,7 +36,8 @@ public class NotifierDelegate extends AbstractServiceDelegate {
         put(params, "nomEtudiant", str(ex, "nomEtudiant"));
         put(params, "titreOffre", str(ex, "titreOffre") != null ? str(ex, "titreOffre") : "n°" + lng(ex, "offreId"));
         put(params, "entreprise", str(ex, "entreprise"));
-        put(params, "motif", "INCIDENT_TRAITEMENT".equals(t) ? str(ex, "messageErreur") : str(ex, "motifRejet"));
+        // le détail technique (messageErreur) reste réservé à la supervision : l'étudiant reçoit un texte neutre
+        put(params, "motif", "INCIDENT_TRAITEMENT".equals(t) ? MOTIF_INCIDENT : str(ex, "motifRejet"));
         put(params, "commentaire", str(ex, "commentaireDecision"));
 
         Map<String, Object> corps = new HashMap<>();

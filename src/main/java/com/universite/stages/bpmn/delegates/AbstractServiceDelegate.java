@@ -1,5 +1,6 @@
 package com.universite.stages.bpmn.delegates;
 
+import com.universite.stages.common.AppConfig;
 import com.universite.stages.clients.Resilience;
 import com.universite.stages.clients.ServiceIndisponibleException;
 import com.universite.stages.soap.commun.ServiceException;
@@ -32,6 +33,7 @@ public abstract class AbstractServiceDelegate implements JavaDelegate {
             execution.setVariable("messageErreur", msg);
             execution.setVariable("activiteEnErreur", execution.getCurrentActivityId());
             execution.setVariable("dateErreur", LocalDateTime.now().toString());
+            execution.setVariable("tentativesEffectuees", AppConfig.getInt("client.tentatives", 3));
             throw new BpmnError(ERREUR_TECHNIQUE, msg);
         }
     }

@@ -54,22 +54,32 @@ const Soap = (() => {
   </wsse:UsernameToken></wsse:Security></soapenv:Header>
   <soapenv:Body><s:${operation}>${corps}</s:${operation}></soapenv:Body>
 </soapenv:Envelope>`;
-    const r = await fetch(`/ws/${service}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: '""' },
-      body: enveloppe,
-    });
-    if (r.status === 503) throw new Error(`Service SOAP « ${service} » indisponible`);
+    let r;
+    try {
+      r = await fetch(`/ws/${service}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: '""' },
+        body: enveloppe,
+      });
+    } catch (e) {
+      throw new ErreurApplication({ statut: 0, code: 'RESEAU', service, message: `${service}.${operation} : ${e.message}` });
+    }
+    if (r.status === 503) {
+      throw new ErreurApplication({ statut: 503, code: 'SERVICE_INDISPONIBLE', service, message: `Service SOAP « ${service} » indisponible (${operation})` });
+    }
     const doc = new DOMParser().parseFromString(await r.text(), 'text/xml');
     const fault = doc.getElementsByTagNameNS('*', 'Fault')[0];
     if (fault) {
       const detail = fault.getElementsByTagNameNS('*', 'ServiceFault')[0];
       if (detail) {
         const f = versObjet(detail);
-        const details = [].concat(f.detail || []);
-        throw new Error(f.message + (details.length ? ' : ' + details.join(' ; ') : ''));
+        throw new ErreurApplication({
+          statut: STATUT_DES_CODES_SOAP[f.code] || 500, code: f.code, service, details: [].concat(f.detail || []), message: f.message,
+        });
       }
-      throw new Error(fault.getElementsByTagName('faultstring')[0]?.textContent || 'Erreur SOAP');
+      const code = fault.getElementsByTagName('faultcode')[0]?.textContent || '';
+      const texte = fault.getElementsByTagName('faultstring')[0]?.textContent || 'Faute SOAP';
+      throw new ErreurApplication({ statut: /FailedAuthentication/.test(code) ? 401 : 500, code: code || null, service, message: texte });
     }
     const reponse = doc.getElementsByTagNameNS(NS[service], `${operation}Response`)[0];
     const valeurs = Array.from(reponse.children).map(versObjet);

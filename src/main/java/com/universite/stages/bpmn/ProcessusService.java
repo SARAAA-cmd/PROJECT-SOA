@@ -257,7 +257,8 @@ public class ProcessusService {
         Map<String, Object> ctx = new LinkedHashMap<>();
         for (String k : List.of("candidatureId", "matricule", "nomEtudiant", "titreOffre", "offreId", "entrepriseId",
                 "entreprise", "scoreCompatibilite", "lettreMotivation", "cvUrl", "etapeCourante", "messageErreur",
-                "commentaireDecision", "nombreDemandesComplement")) {
+                "commentaireDecision", "nombreDemandesComplement", "serviceEnErreur", "activiteEnErreur", "dateErreur",
+                "tentativesEffectuees")) {
             if (vars.get(k) != null) {
                 ctx.put(k, vars.get(k));
             }

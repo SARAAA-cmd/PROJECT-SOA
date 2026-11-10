@@ -32,8 +32,8 @@ public enum TypeNotification {
             "Bonjour,\nLa candidature n°{candidatureId} de {nomEtudiant} pour l'offre « {titreOffre} » attend "
                     + "toujours votre décision."),
     INCIDENT_TRAITEMENT("Incident lors du traitement de votre candidature",
-            "Bonjour {nomEtudiant},\nLe traitement de votre candidature à l'offre « {titreOffre} » a été interrompu "
-                    + "suite à un incident technique. {motif}"),
+            "Bonjour {nomEtudiant},\nLe traitement de votre candidature à l'offre « {titreOffre} » n'a pas pu aboutir "
+                    + "en raison d'une difficulté momentanée de la plateforme. {motif}"),
     ANNULATION("Annulation de candidature",
             "Bonjour,\nLa candidature n°{candidatureId} à l'offre « {titreOffre} » a été annulée."),
     LIBRE("{sujet}", "{message}");
