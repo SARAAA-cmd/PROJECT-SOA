@@ -217,6 +217,10 @@ class PlateformeIT {
             o.setNombrePlaces(1);
             o.setDateLimite(LocalDate.now().plusDays(10));
             OffreService admin = SoapClients.offres(ADMIN, ADMIN_PWD);
+            ServiceException sansType = assertThrows(ServiceException.class, () -> admin.creerOffre(o));
+            assertEquals(ServiceException.INVALIDE, sansType.getFaultInfo().getCode());
+            assertTrue(sansType.getFaultInfo().getDetails().stream().anyMatch(d -> d.contains("typeStage")));
+            o.setTypeStage("PFE");
             assertEquals(ServiceException.REGLE_METIER,
                     assertThrows(ServiceException.class, () -> admin.creerOffre(o)).getFaultInfo().getCode());
             o.setEntrepriseId(2L);
@@ -224,21 +228,34 @@ class PlateformeIT {
                     () -> SoapClients.offres("atlas", ENT_PWD).creerOffre(o)).getFaultInfo().getCode());
             Offre creee = SoapClients.offres("nova", ENT_PWD).creerOffre(o);
             assertEquals("ACTIVE", creee.getStatut());
+            assertEquals("INE3", creee.getNiveauxAutorises());
             assertEquals(1, creee.getPlacesDisponibles());
             assertTrue(admin.supprimerOffre(creee.getId()));
         }
 
         @Test
         @Order(10)
-        @DisplayName("ST-10 Compatibilité offre / profil : filière, niveau, date limite et score de compétences")
+        @DisplayName("ST-10 Compatibilité offre / profil : filière, type de stage / niveau, date limite et score de compétences")
         void compatibilite() throws ServiceException {
             OffreService s = SoapClients.offres(ADMIN, ADMIN_PWD);
-            Compatibilite ok = s.verifierCompatibilite(1, "AMOA", "INE3", "BPMN, uml");
+            // offre 1 : stage ouvrier / PFA (INE1, INE2), filières AMOA et ASEDS
+            Compatibilite ok = s.verifierCompatibilite(1, "AMOA", "INE2", "BPMN, uml");
             assertTrue(ok.isCompatible());
             assertEquals(50, ok.getScoreCompetences());
-            Compatibilite ko = s.verifierCompatibilite(1, "DATA", "INE1", "");
+            assertTrue(s.verifierCompatibilite(1, "AMOA", "INE1", "").isCompatible());
+            Compatibilite ko = s.verifierCompatibilite(1, "DATA", "INE3", "");
             assertFalse(ko.isCompatible());
             assertEquals(2, ko.getMotifs().size());
+            assertTrue(ko.getMotifs().contains("Cette offre de stage ouvrier / PFA est réservée aux étudiants de 1re et 2e année (INE1, INE2)."));
+            // offre 2 : PFE (INE3 uniquement)
+            assertTrue(s.verifierCompatibilite(2, "ASEDS", "INE3", "").isNiveauCompatible());
+            Compatibilite pfe = s.verifierCompatibilite(2, "ASEDS", "INE2", "");
+            assertFalse(pfe.isNiveauCompatible());
+            assertEquals(List.of("Cette offre de stage PFE est réservée aux étudiants de 3e année (INE3)."), pfe.getMotifs());
+            // offre 9 : stage d'observation (INE1 uniquement, toutes filières)
+            assertTrue(s.verifierCompatibilite(9, "SUD", "INE1", "").isCompatible());
+            assertFalse(s.verifierCompatibilite(9, "SUD", "INE2", "").isNiveauCompatible());
+            assertFalse(s.verifierCompatibilite(9, "SUD", "INE3", "").isNiveauCompatible());
             Compatibilite expiree = s.verifierCompatibilite(5, "AMOA", "INE2", "");
             assertFalse(expiree.isDateLimiteRespectee());
             assertFalse(expiree.isCompatible());
@@ -264,6 +281,73 @@ class PlateformeIT {
             assertEquals("AMOA", vuEntreprise.getFiliere());
             Etudiant vuAdmin = etudiants(ADMIN, ADMIN_PWD).consulterEtudiant("E2026001");
             assertEquals("+212 6 61 23 45 01", vuAdmin.getTelephone());
+        }
+
+        @Test
+        @Order(13)
+        @DisplayName("ST-13 Offres filtrées côté serveur selon le niveau : INE1 sans PFE, INE2 ouvrier / PFA, INE3 PFE")
+        void filtrageParNiveau() throws ServiceException {
+            java.util.function.Function<String, java.util.Set<String>> types = (m) -> {
+                try {
+                    return SoapClients.offres(m, ETU_PWD).listerOffresDisponibles().stream()
+                            .map(Offre::getTypeStage).collect(java.util.stream.Collectors.toSet());
+                } catch (ServiceException e) {
+                    throw new IllegalStateException(e);
+                }
+            };
+            assertEquals(java.util.Set.of("OBSERVATION", "OUVRIER_PFA"), types.apply("E2026004"));  // INE1
+            assertEquals(java.util.Set.of("OUVRIER_PFA"), types.apply("E2026001"));                // INE2
+            assertEquals(java.util.Set.of("PFE"), types.apply("E2026007"));                        // INE3
+            assertTrue(SoapClients.offres("E2026007", ETU_PWD).listerOffres(null, null).stream()
+                    .allMatch(o -> "PFE".equals(o.getTypeStage())));
+            assertEquals(java.util.Set.of("OBSERVATION", "OUVRIER_PFA", "PFE"),
+                    SoapClients.offres(ADMIN, ADMIN_PWD).listerOffresDisponibles().stream()
+                            .map(Offre::getTypeStage).collect(java.util.stream.Collectors.toSet()));
+        }
+
+        @Test
+        @Order(14)
+        @DisplayName("ST-14 Mon profil : seuls son propre profil et les champs autorisés sont modifiables")
+        void monProfil() throws ServiceException {
+            // étudiant : coordonnées modifiables, identité / filière / niveau / statut en lecture seule
+            EtudiantService etu = etudiants("E2026006", ETU_PWD);
+            Etudiant moi = etu.consulterEtudiant("E2026006");
+            moi.setTelephone("+212 6 70 00 00 06");
+            moi.setCompetences("C, IoT, Rust");
+            moi.setNom("Pirate");
+            moi.setNiveau("INE3");
+            moi.setStatut("DIPLOME");
+            Etudiant apres = etu.modifierEtudiant(moi);
+            assertEquals("+212 6 70 00 00 06", apres.getTelephone());
+            assertEquals("C, IoT, Rust", apres.getCompetences());
+            assertEquals("Bennani", apres.getNom());
+            assertEquals("INE2", apres.getNiveau());
+            assertEquals("ACTIF", apres.getStatut());
+            Etudiant autre = etudiants(ADMIN, ADMIN_PWD).consulterEtudiant("E2026001");
+            assertEquals(ServiceException.ACCES_REFUSE,
+                    assertThrows(ServiceException.class, () -> etu.modifierEtudiant(autre)).getFaultInfo().getCode());
+            moi.setEmail("adresse-invalide");
+            assertEquals(ServiceException.INVALIDE,
+                    assertThrows(ServiceException.class, () -> etu.modifierEtudiant(moi)).getFaultInfo().getCode());
+
+            // entreprise : coordonnées et contact modifiables, raison sociale et secteur en lecture seule
+            EntrepriseService nova = SoapClients.entreprises("nova", ENT_PWD);
+            Entreprise profil = nova.consulterEntreprise(2);
+            profil.setContactNom("Imane Lahlou");
+            profil.setRaisonSociale("Autre nom");
+            profil.setSecteurActivite("Autre secteur");
+            Entreprise maj = nova.modifierEntreprise(profil);
+            assertEquals("Imane Lahlou", maj.getContactNom());
+            assertEquals("Nova Consulting", maj.getRaisonSociale());
+            assertEquals("Conseil en organisation", maj.getSecteurActivite());
+            assertEquals(ServiceException.ACCES_REFUSE,
+                    assertThrows(ServiceException.class, () -> nova.consulterEntreprise(1)).getFaultInfo().getCode());
+            Entreprise atlas = SoapClients.entreprises(ADMIN, ADMIN_PWD).consulterEntreprise(1);
+            assertEquals(ServiceException.ACCES_REFUSE,
+                    assertThrows(ServiceException.class, () -> nova.modifierEntreprise(atlas)).getFaultInfo().getCode());
+            // les coordonnées des autres entreprises sont masquées dans la liste
+            Entreprise atlasVuParNova = nova.listerEntreprises(null).stream().filter(e -> e.getId() == 1L).findFirst().orElseThrow();
+            assertTrue(atlasVuParNova.getContactEmail().contains("•"));
         }
     }
 
@@ -362,15 +446,17 @@ class PlateformeIT {
 
         @Test
         @Order(6)
-        @DisplayName("RT-06 Clé d'API : accès accepté, clé invalide refusée, régénération et révocation")
+        @DisplayName("RT-06 Clé d'API : accès accepté, clé invalide refusée, régénération réservée au responsable et révocation")
         void cleApi() {
             assertEquals("RESPONSABLE", cle("/api/moi", "stg_demo_admin").json().get("role").asText());
             Http.Reponse ko = cle("/api/moi", "stg_fausse_cle");
             assertEquals(401, ko.status());
             assertEquals("CLE_API_INVALIDE", ko.json().get("erreur").asText());
-            String nouvelle = Http.post("/api/moi/cle-api", "E2026008", ETU_PWD, Map.of()).json().get("cleApi").asText();
-            assertEquals("E2026008", cle("/api/moi", nouvelle).json().get("username").asText());
-            assertEquals(401, cle("/api/moi", "stg_demo_E2026008").status());
+            assertEquals(200, cle("/api/moi", "stg_demo_E2026008").status());
+            assertEquals(403, Http.post("/api/moi/cle-api", "E2026008", ETU_PWD, Map.of()).status());
+            String nouvelle = Http.post("/api/moi/cle-api", ADMIN, ADMIN_PWD, Map.of()).json().get("cleApi").asText();
+            assertEquals(ADMIN, cle("/api/moi", nouvelle).json().get("username").asText());
+            assertEquals(401, cle("/api/moi", "stg_demo_admin").status());
         }
 
         private Http.Reponse cle(String chemin, String cle) {
@@ -425,13 +511,29 @@ class PlateformeIT {
         @Order(2)
         @DisplayName("PT-02 Rejets automatiques motivés (statut, niveau, date limite, référencement, doublon, offre pourvue)")
         void rejets() {
-            Map<String, Long> cas = Map.of("E2026005", 1L, "E2026004", 1L, "E2026003", 5L);
+            Map<String, Long> cas = Map.of("E2026005", 1L, "E2026003", 5L);
             cas.forEach((m, o) -> assertEquals("REJETEE", soumettre(m, o).json().get("statut").asText(), m + "/" + o));
             JsonNode nonRef = soumettre("E2026003", 6).json();
             assertTrue(nonRef.get("variables").get("motifRejet").asText().contains("non référencée"));
             JsonNode pourvue = soumettre("E2026001", 2).json();
             assertEquals("REJETEE", pourvue.get("statut").asText());
             assertEquals("finRejet", nonRef.get("evenementFin").asText());
+        }
+
+        @Test
+        @Order(11)
+        @DisplayName("PT-11 Type de stage : candidature rejetée par le processus avec un motif clair")
+        void rejetTypeDeStage() {
+            JsonNode pfe = soumettre("E2026004", 11).json();   // INE1 -> PFE
+            assertEquals("REJETEE", pfe.get("statut").asText());
+            assertEquals("Cette offre de stage PFE est réservée aux étudiants de 3e année (INE3).",
+                    pfe.get("variables").get("motifRejet").asText());
+            JsonNode obs = soumettre("E2026001", 10).json();   // INE2 -> observation
+            assertEquals("REJETEE", obs.get("statut").asText());
+            assertTrue(obs.get("variables").get("motifRejet").asText()
+                    .contains("Cette offre de stage d'observation est réservée aux étudiants de 1re année (INE1)."));
+            // INE1 -> stage d'observation : recevable, transmis à l'entreprise
+            assertEquals("EN_ATTENTE_DECISION", soumettre("E2026004", 9).json().get("statut").asText());
         }
 
         @Test
@@ -559,7 +661,7 @@ class PlateformeIT {
                 assertEquals(201, Http.post("/api/candidatures", ADMIN, ADMIN_PWD,
                         Map.of("matricule", "E2026007", "offreId", offre)).status());
             }
-            JsonNode r = soumettre("E2026007", 8).json();
+            JsonNode r = soumettre("E2026007", 12).json();
             assertEquals("REJETEE", r.get("statut").asText());
             assertTrue(r.get("variables").get("motifRejet").asText().contains("Nombre maximal"));
             assertEquals(422, Http.post("/api/candidatures", ADMIN, ADMIN_PWD,

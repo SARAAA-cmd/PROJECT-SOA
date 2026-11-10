@@ -291,7 +291,7 @@
           ]
         },
         {
-          "name": "Candidature non recevable (niveau insuffisant)",
+          "name": "Candidature non recevable (type de stage PFE réservé aux INE3)",
           "request": {
             "method": "POST",
             "description": "",
@@ -337,7 +337,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"offreId\": 1\n}"
+              "raw": "{\n  \"offreId\": 11\n}"
             }
           },
           "event": [
@@ -347,7 +347,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
-                  "pm.test('Rejetée', () => pm.expect(pm.response.json().statut).to.eql('REJETEE'));"
+                  "pm.test('Rejetée', () => pm.expect(pm.response.json().statut).to.eql('REJETEE'));",
+                  "pm.test('Motif clair', () => pm.expect(pm.response.json().variables.motifRejet).to.eql(\"Cette offre de stage PFE est réservée aux étudiants de 3e année (INE3).\"));"
                 ]
               }
             }

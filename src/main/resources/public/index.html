@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Stages INPT – Plateforme SOA</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
   <link rel="stylesheet" href="vendor/bpmn-js/assets/diagram-js.css">
   <link rel="stylesheet" href="vendor/bpmn-js/assets/bpmn-js.css">
   <link rel="stylesheet" href="vendor/bpmn-js/assets/bpmn-font/css/bpmn.css">
@@ -28,6 +28,7 @@
         <button data-u="E2026001" data-p="Etudiant@2026">Étudiante · Yasmine Benali (AMOA, INE2)</button>
         <button data-u="E2026002" data-p="Etudiant@2026">Étudiant · Omar Haddad (ASEDS, INE3)</button>
         <button data-u="E2026003" data-p="Etudiant@2026">Étudiante · Salma El Amrani (DATA, INE2)</button>
+        <button data-u="E2026004" data-p="Etudiant@2026">Étudiant · Karim Alaoui (AMOA, INE1)</button>
         <button data-u="atlas" data-p="Entreprise@2026">Entreprise · Atlas Digital (Casablanca)</button>
         <button data-u="nova" data-p="Entreprise@2026">Entreprise · Nova Consulting (Rabat)</button>
         <button data-u="admin" data-p="Admin@2026">Responsable des stages</button>
@@ -51,7 +52,8 @@
             <span class="chevron" aria-hidden="true">▾</span>
           </summary>
           <div class="profil-menu">
-            <button id="btn-cle" type="button">Ma clé d'API</button>
+            <button id="btn-profil" type="button" hidden>Mon profil</button>
+            <button id="btn-cle" type="button" hidden>Ma clé d'API</button>
             <button id="btn-deconnexion" type="button" class="deconnexion">Se déconnecter</button>
           </div>
         </details>
@@ -75,9 +77,9 @@
   <div id="toasts"></div>
 
   <script src="vendor/bpmn-js/bpmn-navigated-viewer.production.min.js" defer></script>
-  <script src="erreurs.js?v=6"></script>
-  <script src="suivi.js?v=6"></script>
-  <script src="soap.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="erreurs.js?v=7"></script>
+  <script src="suivi.js?v=7"></script>
+  <script src="soap.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

@@ -2,6 +2,7 @@ package com.universite.stages.soap.offres;
 
 import com.universite.stages.clients.SoapClients;
 import com.universite.stages.common.Niveau;
+import com.universite.stages.common.TypeStage;
 import com.universite.stages.common.Validation;
 import com.universite.stages.security.Role;
 import com.universite.stages.security.SoapSecurity;
@@ -9,6 +10,7 @@ import com.universite.stages.security.Utilisateur;
 import com.universite.stages.soap.commun.Namespaces;
 import com.universite.stages.soap.commun.ServiceException;
 import com.universite.stages.soap.entreprises.VerificationEntreprise;
+import com.universite.stages.soap.etudiants.Etudiant;
 import jakarta.annotation.Resource;
 import jakarta.jws.WebService;
 import jakarta.xml.ws.WebServiceContext;
@@ -99,14 +101,34 @@ public class OffreServiceImpl implements OffreService {
 
     @Override
     public List<Offre> listerOffres(String statut, Long entrepriseId) throws ServiceException {
-        SoapSecurity.utilisateur(context);
-        return dao.lister(statut, entrepriseId);
+        Utilisateur u = SoapSecurity.utilisateur(context);
+        return filtrerPourEtudiant(u, dao.lister(statut, entrepriseId));
     }
 
     @Override
     public List<Offre> listerOffresDisponibles() throws ServiceException {
-        SoapSecurity.utilisateur(context);
-        return dao.disponibles();
+        Utilisateur u = SoapSecurity.utilisateur(context);
+        return filtrerPourEtudiant(u, dao.disponibles());
+    }
+
+    /**
+     * Un étudiant ne reçoit que les offres dont le type de stage est ouvert à son niveau
+     * (filtrage côté serveur ; le niveau est obtenu par composition SOAP auprès du service Étudiants).
+     */
+    private static List<Offre> filtrerPourEtudiant(Utilisateur u, List<Offre> offres) throws ServiceException {
+        if (!u.aRole(Role.ETUDIANT)) {
+            return offres;
+        }
+        Etudiant e;
+        try {
+            e = SoapClients.etudiants().consulterEtudiant(u.refId());
+        } catch (com.universite.stages.soap.commun.ServiceException ex) {
+            throw ServiceException.of(ServiceException.ACCES_REFUSE, "Profil étudiant introuvable");
+        } catch (WebServiceException ex) {
+            throw ServiceException.of(ServiceException.TECHNIQUE, "Service des étudiants indisponible");
+        }
+        String niveau = e.getNiveau();
+        return offres.stream().filter(o -> TypeStage.de(o.getTypeStage()).map(t -> t.autorise(niveau)).orElse(false)).toList();
     }
 
     @Override
@@ -157,9 +179,11 @@ public class OffreServiceImpl implements OffreService {
         if (!c.isFiliereCompatible()) {
             c.getMotifs().add("Filière « " + filiere + " » non ciblée par l'offre (" + o.getFilieresCiblees() + ")");
         }
-        c.setNiveauCompatible(Niveau.atteint(niveau, o.getNiveauMinimum()));
+        // le type de stage détermine les niveaux autorisés (observation : INE1, ouvrier / PFA : INE1-INE2, PFE : INE3)
+        TypeStage type = TypeStage.de(o.getTypeStage()).orElse(null);
+        c.setNiveauCompatible(type != null && type.autorise(niveau));
         if (!c.isNiveauCompatible()) {
-            c.getMotifs().add("Niveau " + niveau + " inférieur au niveau minimum requis " + o.getNiveauMinimum());
+            c.getMotifs().add(type != null ? type.motifRefus() : "Type de stage de l'offre non renseigné");
         }
 
         c.setDateLimiteRespectee(!LocalDate.now().isAfter(o.getDateLimite()));
@@ -237,7 +261,8 @@ public class OffreServiceImpl implements OffreService {
                 .entre("dureeMois", o.getDureeMois(), 1, 12)
                 .obligatoire("dateLimite", o.getDateLimite())
                 .positif("nombrePlaces", o.getNombrePlaces())
-                .dansListe("niveauMinimum", blankToNull(o.getNiveauMinimum()), Niveau.valeurs())
+                .obligatoire("typeStage", blankToNull(o.getTypeStage()))
+                .dansListe("typeStage", blankToNull(o.getTypeStage()), TypeStage.valeurs())
                 .dansListe("statut", o.getStatut(), STATUTS);
         if (creation) {
             v.dateFuture("dateLimite", o.getDateLimite());
@@ -245,7 +270,8 @@ public class OffreServiceImpl implements OffreService {
         if (!v.estValide()) {
             throw ServiceException.invalide(v.erreurs());
         }
-        o.setNiveauMinimum(blankToNull(o.getNiveauMinimum()));
+        o.setTypeStage(o.getTypeStage().trim());
+        o.setNiveauxAutorises(String.join(", ", TypeStage.de(o.getTypeStage()).orElseThrow().niveaux()));
     }
 
     private static String blankToNull(String s) {

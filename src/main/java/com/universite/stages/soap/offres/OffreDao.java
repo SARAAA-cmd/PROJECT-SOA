@@ -1,6 +1,7 @@
 package com.universite.stages.soap.offres;
 
 import com.universite.stages.common.Database;
+import com.universite.stages.common.TypeStage;
 import com.universite.stages.common.Database.DataAccessException;
 
 import java.sql.Connection;
@@ -50,7 +51,7 @@ public class OffreDao {
 
     public Offre inserer(Offre o) {
         String sql = "INSERT INTO offre (entreprise_id, titre, description, competences_requises, duree_mois, date_limite, "
-                + "nombre_places, places_disponibles, filieres_ciblees, niveau_minimum, lieu, statut, date_publication) "
+                + "nombre_places, places_disponibles, filieres_ciblees, type_stage, lieu, statut, date_publication) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection c = Database.getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -69,7 +70,7 @@ public class OffreDao {
     public void mettreAJour(Offre o) {
         String sql = "UPDATE offre SET entreprise_id = ?, titre = ?, description = ?, competences_requises = ?, "
                 + "duree_mois = ?, date_limite = ?, nombre_places = ?, places_disponibles = ?, filieres_ciblees = ?, "
-                + "niveau_minimum = ?, lieu = ?, statut = ?, date_publication = ? WHERE id = ?";
+                + "type_stage = ?, lieu = ?, statut = ?, date_publication = ? WHERE id = ?";
         try (Connection c = Database.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             remplir(ps, o);
@@ -135,7 +136,7 @@ public class OffreDao {
         ps.setInt(7, o.getNombrePlaces());
         ps.setInt(8, o.getPlacesDisponibles());
         ps.setString(9, o.getFilieresCiblees());
-        ps.setString(10, o.getNiveauMinimum());
+        ps.setString(10, o.getTypeStage());
         ps.setString(11, o.getLieu());
         ps.setString(12, o.getStatut());
         ps.setDate(13, Date.valueOf(o.getDatePublication()));
@@ -153,7 +154,8 @@ public class OffreDao {
         o.setNombrePlaces(rs.getInt("nombre_places"));
         o.setPlacesDisponibles(rs.getInt("places_disponibles"));
         o.setFilieresCiblees(rs.getString("filieres_ciblees"));
-        o.setNiveauMinimum(rs.getString("niveau_minimum"));
+        o.setTypeStage(rs.getString("type_stage"));
+        o.setNiveauxAutorises(TypeStage.de(o.getTypeStage()).map(t -> String.join(", ", t.niveaux())).orElse(null));
         o.setLieu(rs.getString("lieu"));
         o.setStatut(rs.getString("statut"));
         o.setDatePublication(rs.getDate("date_publication").toLocalDate());

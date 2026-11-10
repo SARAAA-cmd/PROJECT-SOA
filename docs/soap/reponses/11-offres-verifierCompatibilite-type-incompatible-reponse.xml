@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <ns2:verifierCompatibiliteResponse xmlns:ns2="http://stages.universite.com/offres" xmlns:ns3="http://stages.universite.com/commun">
+      <compatibilite>
+        <offreId>2</offreId>
+        <compatible>false</compatible>
+        <filiereCompatible>true</filiereCompatible>
+        <niveauCompatible>false</niveauCompatible>
+        <dateLimiteRespectee>true</dateLimiteRespectee>
+        <scoreCompetences>50</scoreCompetences>
+        <competenceManquante>REST</competenceManquante>
+        <competenceManquante>Docker</competenceManquante>
+        <motif>Cette offre de stage PFE est réservée aux étudiants de 3e année (INE3).</motif>
+      </compatibilite>
+    </ns2:verifierCompatibiliteResponse>
+  </S:Body>
+</S:Envelope>

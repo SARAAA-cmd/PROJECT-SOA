@@ -37,8 +37,28 @@ public final class Database {
                     st.execute(trimmed);
                 }
             }
+            migrerTypeStage(st);
         } catch (IOException | SQLException e) {
             throw new IllegalStateException("Initialisation de la base impossible", e);
+        }
+    }
+
+    /**
+     * Bases créées avant l'introduction du type de stage : l'ancien « niveau minimum » est converti
+     * (INE3 -> PFE, sinon stage ouvrier / PFA) puis la colonne est supprimée. Sans effet sur une base récente.
+     */
+    private static void migrerTypeStage(Statement st) {
+        try {
+            st.execute("UPDATE offre SET type_stage = CASE WHEN niveau_minimum IN ('INE3', 'M2', 'D') THEN 'PFE' "
+                    + "ELSE 'OUVRIER_PFA' END WHERE type_stage IS NULL");
+            st.execute("ALTER TABLE offre DROP COLUMN niveau_minimum");
+        } catch (SQLException colonneAbsente) {
+            // base déjà au nouveau format
+        }
+        try {
+            st.execute("UPDATE offre SET type_stage = 'OUVRIER_PFA' WHERE type_stage IS NULL");
+        } catch (SQLException e) {
+            throw new IllegalStateException("Migration du type de stage impossible", e);
         }
     }
 

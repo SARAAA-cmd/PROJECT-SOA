@@ -12,7 +12,8 @@
 <xs:element name="nombrePlaces" type="xs:int"/>
 <xs:element name="placesDisponibles" type="xs:int"/>
 <xs:element name="filieresCiblees" type="xs:string" minOccurs="0"/>
-<xs:element name="niveauMinimum" type="xs:string" minOccurs="0"/>
+<xs:element name="typeStage" type="xs:string"/>
+<xs:element name="niveauxAutorises" type="xs:string" minOccurs="0"/>
 <xs:element name="lieu" type="xs:string" minOccurs="0"/>
 <xs:element name="statut" type="xs:string" minOccurs="0"/>
 <xs:element name="datePublication" type="xs:date" minOccurs="0"/>

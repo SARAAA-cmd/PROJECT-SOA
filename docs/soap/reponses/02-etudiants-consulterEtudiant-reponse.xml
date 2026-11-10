@@ -6,9 +6,9 @@
         <matricule>E2026001</matricule>
         <nom>Benali</nom>
         <prenom>Yasmine</prenom>
-        <email>yasmine.benali@etu.universite.example</email>
-        <telephone>+212 6 00 00 00 01</telephone>
-        <adresse>Cité universitaire</adresse>
+        <email>yasmine.benali@etu.inpt-stages.example</email>
+        <telephone>+212 6 61 23 45 01</telephone>
+        <adresse>Résidence étudiante, Rabat</adresse>
         <filiere>AMOA</filiere>
         <niveau>INE2</niveau>
         <competences>BPMN, UML, SQL, Java, Gestion de projet</competences>

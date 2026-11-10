@@ -9,14 +9,15 @@
         <description>Développement de services web SOAP/REST et intégration dans une architecture orientée services.</description>
         <competencesRequises>Java, SOAP, REST, Docker</competencesRequises>
         <dureeMois>6</dureeMois>
-        <dateLimite>2026-10-25</dateLimite>
+        <dateLimite>2026-11-12</dateLimite>
         <nombrePlaces>1</nombrePlaces>
         <placesDisponibles>1</placesDisponibles>
-        <filieresCiblees>Génie Logiciel</filieresCiblees>
-        <niveauMinimum>INE3</niveauMinimum>
+        <filieresCiblees>ASEDS</filieresCiblees>
+        <typeStage>PFE</typeStage>
+        <niveauxAutorises>INE3</niveauxAutorises>
         <lieu>Casablanca</lieu>
         <statut>ACTIVE</statut>
-        <datePublication>2026-10-13</datePublication>
+        <datePublication>2026-10-31</datePublication>
       </offre>
       <offre>
         <id>1</id>
@@ -25,14 +26,15 @@
         <description>Recueil des besoins, rédaction des spécifications fonctionnelles et modélisation BPMN des processus métier d'un client bancaire.</description>
         <competencesRequises>BPMN, UML, SQL, Gestion de projet</competencesRequises>
         <dureeMois>6</dureeMois>
-        <dateLimite>2026-11-22</dateLimite>
+        <dateLimite>2026-12-10</dateLimite>
         <nombrePlaces>2</nombrePlaces>
         <placesDisponibles>2</placesDisponibles>
-        <filieresCiblees>AMOA, Génie Logiciel</filieresCiblees>
-        <niveauMinimum>INE2</niveauMinimum>
+        <filieresCiblees>AMOA, ASEDS</filieresCiblees>
+        <typeStage>OUVRIER_PFA</typeStage>
+        <niveauxAutorises>INE1, INE2</niveauxAutorises>
         <lieu>Casablanca</lieu>
         <statut>ACTIVE</statut>
-        <datePublication>2026-10-13</datePublication>
+        <datePublication>2026-10-31</datePublication>
       </offre>
     </ns2:consulterOffresEntrepriseResponse>
   </S:Body>

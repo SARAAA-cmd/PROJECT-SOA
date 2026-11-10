@@ -20,7 +20,7 @@
         <dateLimite>2027-01-15</dateLimite>
         <nombrePlaces>2</nombrePlaces>
         <filieresCiblees>AMOA</filieresCiblees>
-        <niveauMinimum>INE1</niveauMinimum>
+        <typeStage>OUVRIER_PFA</typeStage>
         <lieu>Rabat</lieu>
       </offre>
     </off:creerOffre>

@@ -12,8 +12,8 @@
         applications (orchestrateur, Postman, scripts), ou HTTP Basic, utilisé par l'interface web après connexion.
         Une clé invalide ou révoquée est refusée (\code{401 CLE\_API\_INVALIDE}). Seul \code{/api/sante} est public.
   \item[Gestion des clés] Seule l'empreinte SHA-256 de la clé est stockée. \code{POST /api/moi/cle-api} (bouton
-        « Ma clé d'API » de l'interface) génère une nouvelle clé aléatoire de 256 bits, l'affiche une seule fois et
-        révoque la précédente.
+        « Ma clé d'API » de l'interface), réservé au responsable des stages (403 pour les autres rôles), génère une
+        nouvelle clé aléatoire de 256 bits, l'affiche une seule fois et révoque la précédente.
   \item[Appels inter-services] L'orchestrateur et les services composites utilisent un compte technique de rôle
         \code{SYSTEME}, configurable, injecté par un intercepteur client (SOAP) ou par sa clé d'API (REST).
 \end{description}
@@ -29,7 +29,9 @@
         adresses e-mail sont également masquées dans les journaux du serveur.
   \item \textbf{Cloisonnement des données} : un étudiant ne peut lire que sa fiche, ses candidatures, ses notifications et
         ses stages ; une entreprise que ses offres, les candidatures et stages qui la concernent, et elle ne peut pas modifier
-        son propre référencement. Les filtres de recherche sont \emph{imposés} côté serveur, indépendamment des paramètres reçus.
+        son propre référencement. Dans « Mon profil », chacun ne voit et ne modifie que sa propre fiche : l'étudiant ses
+        coordonnées et compétences (identité, filière, niveau et statut restent gérés par l'école), l'entreprise ses
+        coordonnées et son contact (raison sociale et secteur en lecture seule) ; le contrôle est fait par les services SOAP. Les filtres de recherche sont \emph{imposés} côté serveur, indépendamment des paramètres reçus.
   \item \textbf{Variables de processus} : l'API d'orchestration n'expose qu'une liste blanche de variables.
   \item \textbf{Requêtes SQL paramétrées} partout (\code{PreparedStatement}), ce qui exclut l'injection SQL.
   \item \textbf{Interface web} : toutes les données affichées sont échappées (prévention XSS), l'en-tête

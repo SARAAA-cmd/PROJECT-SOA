@@ -40,15 +40,15 @@
 
 <xs:element name="verifierDisponibiliteResponse" type="tns:verifierDisponibiliteResponse"/>
 
-<xs:complexType name="consulterOffre">
+<xs:complexType name="listerOffresExpirantBientot">
 <xs:sequence>
-<xs:element name="offreId" type="xs:long"/>
+<xs:element name="jours" type="xs:int"/>
 </xs:sequence>
 </xs:complexType>
 
-<xs:complexType name="consulterOffreResponse">
+<xs:complexType name="listerOffresExpirantBientotResponse">
 <xs:sequence>
-<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
+<xs:element name="offre" type="tns:Offre" minOccurs="0" maxOccurs="unbounded"/>
 </xs:sequence>
 </xs:complexType>
 
@@ -64,10 +64,23 @@
 <xs:element name="nombrePlaces" type="xs:int"/>
 <xs:element name="placesDisponibles" type="xs:int"/>
 <xs:element name="filieresCiblees" type="xs:string" minOccurs="0"/>
-<xs:element name="niveauMinimum" type="xs:string" minOccurs="0"/>
+<xs:element name="typeStage" type="xs:string"/>
+<xs:element name="niveauxAutorises" type="xs:string" minOccurs="0"/>
 <xs:element name="lieu" type="xs:string" minOccurs="0"/>
 <xs:element name="statut" type="xs:string" minOccurs="0"/>
 <xs:element name="datePublication" type="xs:date" minOccurs="0"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterOffre">
+<xs:sequence>
+<xs:element name="offreId" type="xs:long"/>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="consulterOffreResponse">
+<xs:sequence>
+<xs:element name="offre" type="tns:Offre" minOccurs="0"/>
 </xs:sequence>
 </xs:complexType>
 
@@ -76,18 +89,6 @@
 </xs:complexType>
 
 <xs:complexType name="listerOffresDisponiblesResponse">
-<xs:sequence>
-<xs:element name="offre" type="tns:Offre" minOccurs="0" maxOccurs="unbounded"/>
-</xs:sequence>
-</xs:complexType>
-
-<xs:complexType name="listerOffresExpirantBientot">
-<xs:sequence>
-<xs:element name="jours" type="xs:int"/>
-</xs:sequence>
-</xs:complexType>
-
-<xs:complexType name="listerOffresExpirantBientotResponse">
 <xs:sequence>
 <xs:element name="offre" type="tns:Offre" minOccurs="0" maxOccurs="unbounded"/>
 </xs:sequence>
@@ -199,6 +200,7 @@
 <xs:element name="compatible" type="xs:boolean"/>
 <xs:element name="filiereCompatible" type="xs:boolean"/>
 <xs:element name="niveauCompatible" type="xs:boolean"/>
+<xs:element name="dateLimiteRespectee" type="xs:boolean"/>
 <xs:element name="scoreCompetences" type="xs:int"/>
 <xs:element name="competenceManquante" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
 <xs:element name="motif" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>

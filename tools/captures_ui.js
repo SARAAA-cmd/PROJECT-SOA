@@ -36,6 +36,12 @@ const erreurs = [];
   // 2. Étudiante : offres + candidature
   await connexion('E2026001');
   await capture('etudiant-offres');
+  // « Mon profil » (menu du profil, en haut à droite)
+  await page.click('#profil summary');
+  await page.click('#btn-profil');
+  await page.waitForSelector('#f-profil');
+  await capture('etudiant-profil');
+  await fermer();
   await page.click('[data-postuler="1"]');
   await page.click('#f-postuler button[type=submit]');
   await page.waitForSelector('#resultat .encart');
@@ -121,6 +127,12 @@ const erreurs = [];
   await capture('admin-etudiants');
   await menu('entreprises');
   await capture('admin-entreprises');
+  await menu('offres-admin');
+  await capture('admin-offres');
+
+  // 6. Étudiant de 1re année : offres filtrées par type de stage (observation, ouvrier / PFA)
+  await connexion('E2026004');
+  await capture('etudiant-offres-types');
 
   await browser.close();
   console.log(erreurs.length ? 'ERREURS:\n' + erreurs.join('\n') : 'Aucune erreur JavaScript');

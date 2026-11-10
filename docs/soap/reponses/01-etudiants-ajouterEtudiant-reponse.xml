@@ -12,7 +12,7 @@
         <niveau>INE2</niveau>
         <competences>BPMN, UML, SQL</competences>
         <statut>ACTIF</statut>
-        <dateInscription>2026-10-23</dateInscription>
+        <dateInscription>2026-11-10</dateInscription>
       </etudiant>
     </ns2:ajouterEtudiantResponse>
   </S:Body>

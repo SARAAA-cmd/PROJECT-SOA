@@ -70,26 +70,39 @@ final class DonneesDemo {
         LocalDate j = LocalDate.now();
         offre(offres, atlas, "Assistant chef de projet AMOA", "Recueil des besoins, rédaction des spécifications fonctionnelles et "
                 + "modélisation BPMN des processus métier d'un client bancaire.", "BPMN, UML, SQL, Gestion de projet",
-                6, j.plusDays(30), 2, "AMOA, ASEDS", "INE2", "Casablanca", Offre.ACTIVE);
+                6, j.plusDays(30), 2, "AMOA, ASEDS", "OUVRIER_PFA", "Casablanca", Offre.ACTIVE);
         offre(offres, atlas, "Développeur Java SOA", "Développement de services web SOAP/REST et intégration dans une "
                 + "architecture orientée services.", "Java, SOAP, REST, Docker", 6, j.plusDays(2), 1,
-                "ASEDS", "INE3", "Casablanca", Offre.ACTIVE);
+                "ASEDS", "PFE", "Casablanca", Offre.ACTIVE);
         offre(offres, nova, "Consultant junior en transformation digitale", "Accompagnement de la refonte des processus "
                 + "RH d'une administration : cartographie, indicateurs et conduite du changement.", "BPMN, Gestion de projet, Excel",
-                4, j.plusDays(20), 3, "AMOA", "INE1", "Rabat", Offre.ACTIVE);
+                4, j.plusDays(20), 3, "AMOA", "OUVRIER_PFA", "Rabat", Offre.ACTIVE);
         offre(offres, fin, "Data analyst – risque de crédit", "Analyse des données de crédit et construction de "
                 + "tableaux de bord de suivi du risque.", "Python, SQL, Power BI", 5, j.plusDays(15), 1,
-                "DATA", "INE2", "Casablanca", Offre.ACTIVE);
+                "DATA", "OUVRIER_PFA", "Casablanca", Offre.ACTIVE);
         offre(offres, fin, "Business analyst (candidatures closes)", "Offre dont la date limite est dépassée.",
-                "SQL, UML", 3, j.minusDays(5), 2, "", null, "Casablanca", Offre.ACTIVE);
+                "SQL, UML", 3, j.minusDays(5), 2, "", "OUVRIER_PFA", "Casablanca", Offre.ACTIVE);
         offre(offres, nonRef, "Stage marketing digital", "Offre d'une entreprise non référencée par l'école.",
-                "SEO", 3, j.plusDays(25), 1, "", null, "Marrakech", Offre.ACTIVE);
+                "SEO", 3, j.plusDays(25), 1, "", "OUVRIER_PFA", "Marrakech", Offre.ACTIVE);
         offre(offres, cyber, "Analyste SOC junior", "Surveillance des événements de sécurité, analyse d'alertes et "
                 + "rédaction de rapports d'incidents au sein d'un centre opérationnel de sécurité.", "Réseaux, Sécurité, Linux, SIEM",
-                6, j.plusDays(25), 2, "ICCN, SUD", "INE2", "Agadir", Offre.ACTIVE);
+                6, j.plusDays(25), 2, "ICCN, SUD", "OUVRIER_PFA", "Agadir", Offre.ACTIVE);
         offre(offres, cloud, "Ingénieur Cloud & IoT – plateforme de télémétrie", "Conception d'une chaîne de collecte de "
                 + "données de capteurs et déploiement sur Kubernetes.", "Python, Docker, Kubernetes, IoT",
-                6, j.plusDays(18), 2, "Cloud & IoT, SESNum", "INE2", "Rabat", Offre.ACTIVE);
+                6, j.plusDays(18), 2, "Cloud & IoT, SESNum", "OUVRIER_PFA", "Rabat", Offre.ACTIVE);
+        // offres supplémentaires pour couvrir les trois types de stage
+        offre(offres, cloud, "Stage d'observation – découverte d'un datacenter", "Immersion d'un mois dans les équipes "
+                + "d'exploitation : supervision, astreintes et sécurité physique d'un centre de données.", "Linux, Réseaux",
+                1, j.plusDays(28), 3, "", "OBSERVATION", "Rabat", Offre.ACTIVE);
+        offre(offres, fin, "Stage d'initiation – métiers de la banque digitale", "Découverte des métiers de la banque en "
+                + "ligne : relation client digitale, conformité et pilotage des applications mobiles.", "Excel, Communication",
+                1, j.plusDays(22), 2, "AMOA, DATA", "OBSERVATION", "Casablanca", Offre.ACTIVE);
+        offre(offres, nova, "PFE – Pilotage de la transformation BPMN d'un assureur", "Projet de fin d'études : "
+                + "cartographie des processus, modélisation BPMN 2.0, étude d'impact et accompagnement du déploiement.",
+                "BPMN, UML, Gestion de projet, SQL", 6, j.plusDays(35), 1, "AMOA, ASEDS", "PFE", "Rabat", Offre.ACTIVE);
+        offre(offres, cyber, "PFE – Plateforme de détection d'intrusions", "Projet de fin d'études : conception d'une "
+                + "chaîne de détection (sondes, SIEM, tableaux de bord) pour un réseau industriel.", "Réseaux, Sécurité, Python, Docker",
+                6, j.plusDays(32), 2, "ICCN, SUD, Cloud & IoT", "PFE", "Agadir", Offre.ACTIVE);
     }
 
     /** Crée un compte et sa clé d'API de démonstration : stg_demo_<identifiant>. */
@@ -133,7 +146,7 @@ final class DonneesDemo {
     }
 
     private static void offre(OffreDao dao, long ent, String titre, String desc, String comp, int duree, LocalDate limite,
-                              int places, String filieres, String niveau, String lieu, String statut) {
+                              int places, String filieres, String typeStage, String lieu, String statut) {
         Offre o = new Offre();
         o.setEntrepriseId(ent);
         o.setTitre(titre);
@@ -144,7 +157,7 @@ final class DonneesDemo {
         o.setNombrePlaces(places);
         o.setPlacesDisponibles(places);
         o.setFilieresCiblees(filieres);
-        o.setNiveauMinimum(niveau);
+        o.setTypeStage(typeStage);
         o.setLieu(lieu);
         o.setStatut(statut);
         o.setDatePublication(LocalDate.now().minusDays(10));

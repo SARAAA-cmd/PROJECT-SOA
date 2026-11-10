@@ -7,7 +7,7 @@ Trois niveaux de tests complémentaires ont été mis en place :
         sur des bases H2 en mémoire puis sollicitée par de \emph{vrais} appels SOAP (clients JAX-WS générés depuis le WSDL)
         et HTTP. Les tests couvrent les services un par un puis le processus de bout en bout, y compris les pannes.
         Ils s'exécutent à chaque \code{mvn package} et ont également été exécutés sur \textbf{PostgreSQL~16}.
-  \item \textbf{Collection Postman} (\code{docs/postman}) : 39 requêtes enchaînées avec 45 assertions sur les codes
+  \item \textbf{Collection Postman} (\code{docs/postman}) : 39 requêtes enchaînées avec 46 assertions sur les codes
         et les contenus, authentifiées par clé d'API, exécutable dans le \emph{Collection Runner} ou avec Newman.
   \item \textbf{Requêtes SoapUI} (\code{docs/soap}) : enveloppes prêtes à l'emploi pour chaque type d'opération,
         accompagnées des réponses réellement obtenues.
@@ -35,20 +35,22 @@ ST-05 & Ajouter un matricule existant & Fault \code{CONFLIT} & \ok \\
 ST-06 & Un étudiant consulte une autre fiche / supprime sa fiche & Fault \code{ACCES\_REFUSE} & \ok \\
 ST-07 & Vérifier un étudiant actif, suspendu, inexistant & éligible / non éligible / inexistant & \ok \\
 ST-08 & CRUD entreprise ; offres d'une entreprise ; suppression avec offres actives & 2 offres ; \code{REGLE\_METIER} & \ok \\
-ST-09 & Publier une offre : entreprise non référencée, autre entreprise, entreprise propriétaire & \code{REGLE\_METIER}, \code{ACCES\_REFUSE}, offre \code{ACTIVE} & \ok \\
-ST-10 & Compatibilité AMOA/INE3, DATA/INE1 et offre expirée & compatible, score 50 \% ; incompatible, 2 motifs ; incompatible (date limite) & \ok \\
+ST-09 & Publier une offre : sans type de stage, entreprise non référencée, autre entreprise, entreprise propriétaire & \code{DONNEES\_INVALIDES}, \code{REGLE\_METIER}, \code{ACCES\_REFUSE}, offre \code{ACTIVE} ouverte à INE3 & \ok \\
+ST-10 & Compatibilité selon le type : ouvrier / PFA (INE1, INE2, puis DATA/INE3), PFE (INE3, INE2), observation (INE1, INE2, INE3), offre expirée & compatible, score 50 \% ; 2 motifs dont le type ; motif « réservée aux étudiants de 3e année (INE3) » ; INE1 seul accepté ; incompatible (date limite) & \ok \\
 ST-11 & Disponibilité d'une offre expirée & date dépassée, non disponible & \ok \\
 ST-12 & Fiche d'un candidat consultée par une entreprise puis par le responsable & téléphone et e-mail masqués, adresse absente ; fiche complète & \ok \\
+ST-13 & Offres disponibles demandées par un étudiant INE1, INE2, INE3, puis par le responsable & observation + ouvrier / PFA ; ouvrier / PFA ; PFE ; les trois types & \ok \\
+ST-14 & « Mon profil » : étudiant (coordonnées, puis nom, niveau, statut ; profil d'un autre ; e-mail invalide), entreprise (contact, raison sociale ; profil d'une autre) & champs autorisés modifiés, autres inchangés ; \code{ACCES\_REFUSE} ; \code{DONNEES\_INVALIDES} ; coordonnées des autres masquées & \ok \\
 \multicolumn{4}{@{}l}{\textit{Services REST}}\\
 RT-01 & Requêtes sans identifiants, avec mauvais mot de passe, rôle étudiant sur \code{POST /stages} & 401, 401, 403 & \ok \\
 RT-02 & Dépôt invalide, valide, en double, JSON mal formé & 400, 201 \code{DEPOSEE}, 409, 400 & \ok \\
 RT-03 & Transition interdite, annulation par un tiers, passage en évaluation, annulation refusée, historique ; annulation d'une candidature déposée & 409, 403, 200, 422, 3 entrées ; \code{ANNULEE} puis 422 & \ok \\
 RT-04 & Notification d'acceptation ; lecture par un autre étudiant ; type inconnu & 201 et message rendu ; 403 ; 400 & \ok \\
 RT-05 & Stage : création, doublon, compte rendu, note 25, évaluation finale, historique & 201 \code{EN\_COURS}, 409, 201, 400, \code{TERMINE}, moyenne 16,5, étudiant \code{ACTIF} & \ok \\
-RT-06 & Clé d'API valide, invalide, régénérée ; ancienne clé & 200 ; 401 \code{CLE\_API\_INVALIDE} ; 200 ; 401 (révoquée) & \ok \\
+RT-06 & Clé d'API valide, invalide ; régénération par un étudiant puis par le responsable ; ancienne clé & 200 ; 401 \code{CLE\_API\_INVALIDE} ; 403 puis 200 ; 401 (révoquée) & \ok \\
 \multicolumn{4}{@{}l}{\textit{Processus BPMN}}\\
 PT-01 & Scénario nominal : candidature puis acceptation par l'entreprise & Stage créé aux dates saisies, étudiant \code{EN\_STAGE}, offre \code{POURVUE}, 3 notifications ; tâche invisible pour une autre entreprise & \ok \\
-PT-02 & Candidatures non recevables : étudiant suspendu, niveau insuffisant, date dépassée, entreprise non référencée, offre pourvue & 5 instances terminées par « Candidature rejetée » avec motif & \ok \\
+PT-02 & Candidatures non recevables : étudiant suspendu, date dépassée, entreprise non référencée, offre pourvue & 4 instances terminées par « Candidature rejetée » avec motif & \ok \\
 PT-03 & Complément sans commentaire, complément, puis refus & 400 ; retour à l'évaluation ; \code{REFUSEE} ; notifications \code{DEMANDE\_COMPLEMENT} et \code{REFUS} & \ok \\
 PT-04 & Service Candidatures en panne pendant les vérifications, puis relance & \code{INCIDENT\_TECHNIQUE} (étape \code{VERIFICATIONS}) puis \code{EN\_ATTENTE\_DECISION} & \ok \\
 PT-05 & Service Stages en panne pendant la finalisation, puis abandon & \code{INCIDENT\_TECHNIQUE} (étape \code{FINALISATION}) puis \code{ABANDONNEE} & \ok \\
@@ -57,16 +59,18 @@ PT-07 & Annulation d'une candidature déposée & Instance \code{INTERROMPU} & \o
 PT-08 & Délai de décision dépassé (2 s en test) & Relance de l'entreprise, évaluation toujours en attente & \ok \\
 PT-09 & Prise en charge par l'entreprise puis tentative d'annulation & \code{DEPOSEE} → \code{EN\_COURS\_EVALUATION}, tâche attribuée, annulation refusée (422) & \ok \\
 PT-10 & Sixième candidature en cours pour un même étudiant & Rejet motivé par le processus ; 422 sur l'API & \ok \\
+PT-11 & Type de stage : INE1 sur un PFE, INE2 sur un stage d'observation, INE1 sur un stage d'observation & rejet « Cette offre de stage PFE est réservée aux étudiants de 3e année (INE3). » ; rejet (1re année) ; transmise à l'entreprise & \ok \\
 \end{longtable}
 
 \begin{lstlisting}[language=sh, caption={Exécution de la suite (extrait de la sortie Maven Surefire)}]
 $ mvn test
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Soap
+Tests run: 14, Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Soap
 Tests run: 6,  Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Rest
-Tests run: 10, Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Processus
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0 -- in PlateformeIT$Processus
+Tests run: 31, Failures: 0, Errors: 0, Skipped: 0
 
-$ mvn test -Ddb.url=jdbc:postgresql://localhost:5433/stages -Dbpmn.db.url=jdbc:postgresql://...
-Tests run: 24, Failures: 0, Errors: 0, Skipped: 0
+$ mvn test -Ddb.url=jdbc:postgresql://localhost:5432/stages_test -Dbpmn.db.url=jdbc:postgresql://...
+Tests run: 31, Failures: 0, Errors: 0, Skipped: 0
 \end{lstlisting}
 
 \begin{lstlisting}[language=Java, caption={Exemple de test : indisponibilité puis relance (PT-04)}]

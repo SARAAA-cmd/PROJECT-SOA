@@ -3,7 +3,7 @@
   <S:Body>
     <ns2:creerOffreResponse xmlns:ns2="http://stages.universite.com/offres" xmlns:ns3="http://stages.universite.com/commun">
       <offre>
-        <id>7</id>
+        <id>13</id>
         <entrepriseId>2</entrepriseId>
         <titre>Analyste fonctionnel junior</titre>
         <description>Recueil des besoins et rédaction de spécifications.</description>
@@ -13,10 +13,11 @@
         <nombrePlaces>2</nombrePlaces>
         <placesDisponibles>2</placesDisponibles>
         <filieresCiblees>AMOA</filieresCiblees>
-        <niveauMinimum>INE1</niveauMinimum>
+        <typeStage>OUVRIER_PFA</typeStage>
+        <niveauxAutorises>INE1, INE2</niveauxAutorises>
         <lieu>Rabat</lieu>
         <statut>ACTIVE</statut>
-        <datePublication>2026-10-23</datePublication>
+        <datePublication>2026-11-10</datePublication>
       </offre>
     </ns2:creerOffreResponse>
   </S:Body>

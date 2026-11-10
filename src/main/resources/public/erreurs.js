@@ -32,6 +32,7 @@ const REGLES_METIER = [
   { motif: /aucune place|plus de place|pourvue/i, message: "Il n'y a plus de place disponible sur cette offre." },
   { motif: /nombre maximal|candidatures en cours/i,
     message: 'Vous avez atteint la limite de 5 candidatures en cours. Attendez une réponse ou annulez une candidature encore « déposée ».' },
+  { motif: /réservée aux étudiants/i, message: "Ce type de stage n'est pas ouvert à votre année d'études." },
   { motif: /fili[eè]re|niveau|non cibl|incompatible/i, message: 'Votre profil (filière ou niveau) ne correspond pas aux critères de cette offre.' },
   { motif: /annulation impossible/i, message: "Cette candidature ne peut plus être annulée : l'entreprise a déjà commencé à l'examiner." },
   { motif: /ne peut plus être modifiée/i, message: 'Cette candidature ne peut plus être modifiée.' },
@@ -45,11 +46,11 @@ const LIBELLES_CHAMPS = {
   filiere: 'Filière', niveau: 'Niveau', competences: 'Compétences', lettreMotivation: 'Lettre de motivation',
   cvUrl: 'Lien vers le CV', titre: 'Titre', description: 'Description', competencesRequises: 'Compétences requises',
   dureeMois: 'Durée', nombrePlaces: 'Nombre de places', dateLimite: 'Date limite', lieu: 'Lieu',
-  filieresCiblees: 'Filières ciblées', niveauMinimum: 'Niveau minimum', dateDebut: 'Début du stage', dateFin: 'Fin du stage',
+  filieresCiblees: 'Filières ciblées', typeStage: 'Type de stage', dateDebut: 'Début du stage', dateFin: 'Fin du stage',
   tuteur: 'Tuteur', commentaire: 'Commentaire', decision: 'Décision', note: 'Note', evaluateur: 'Évaluateur',
   appreciation: 'Appréciation', periode: 'Période', contenu: 'Contenu', raisonSociale: 'Raison sociale',
   secteurActivite: "Secteur d'activité", contactNom: 'Responsable de contact', contactEmail: 'E-mail du contact',
-  contactTelephone: 'Téléphone du contact', ville: 'Ville', offreId: 'Offre', statut: 'Statut',
+  contactTelephone: 'Téléphone du contact', contactFonction: 'Fonction du contact', ville: 'Ville', offreId: 'Offre', statut: 'Statut',
 };
 
 const RAISONS_SAISIE = [

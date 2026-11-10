@@ -44,7 +44,7 @@ public class SystemeResource {
     /** Génère une nouvelle clé d'API pour l'utilisateur connecté ; l'ancienne est révoquée. */
     @POST
     @Path("moi/cle-api")
-    @PermitAll
+    @RolesAllowed(Role.RESPONSABLE) // génération de clé réservée au responsable des stages
     public Map<String, Object> nouvelleCle(@Context SecurityContext sc) {
         Utilisateur u = Securite.utilisateur(sc);
         return Map.of("username", u.username(), "cleApi", UtilisateurDao.genererCle(u.username()),

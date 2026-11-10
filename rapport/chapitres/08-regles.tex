@@ -21,18 +21,19 @@ RG-02 & L'adresse e-mail d'un étudiant est unique (insensible à la casse). & �
 RG-03 & Un étudiant créé sans statut est \code{ACTIF}. & Étudiants & ST-03 \\
 RG-04 & Seul un étudiant \code{ACTIF} est éligible aux candidatures (un étudiant suspendu, en stage ou diplômé ne l'est pas). & Étudiants, BPMN & ST-07, PT-02 \\
 RG-05 & Un étudiant en stage ne peut pas être supprimé. & Étudiants & — \\
-RG-06 & Un étudiant ne consulte que sa propre fiche et ne modifie aucune donnée de référence. & Étudiants & ST-06 \\
+RG-06 & Un étudiant ne consulte que sa propre fiche ; dans « Mon profil », il ne modifie que ses coordonnées (e-mail, téléphone, adresse) et ses compétences, jamais son identité, sa filière, son niveau ni son statut. & Étudiants & ST-06, ST-14 \\
 RG-32 & Une entreprise ne voit pas les coordonnées personnelles d'un candidat (téléphone et e-mail masqués, adresse non transmise). & Étudiants & ST-12 \\
 \multicolumn{4}{@{}l}{\textit{Entreprises et offres}}\\
 RG-07 & La raison sociale d'une entreprise est unique ; la date de référencement est fixée à l'activation du référencement. & Entreprises & ST-08 \\
 RG-08 & Une entreprise ayant des offres actives ne peut pas être supprimée. & Entreprises & ST-08 \\
 RG-09 & Seule une entreprise référencée peut publier une offre. & Offres & ST-09 \\
-RG-10 & Une entreprise ne gère que ses propres offres et ne modifie pas son référencement. & Offres, Entreprises & ST-09 \\
+RG-10 & Une entreprise ne gère que ses propres offres ; elle ne consulte et ne modifie que son profil (coordonnées et contact), sans changer sa raison sociale, son secteur ni son référencement. & Offres, Entreprises & ST-09, ST-14 \\
 RG-11 & À la création, la date limite est future, la durée comprise entre 1 et 12 mois, le nombre de places positif ; l'offre est \code{ACTIVE} et toutes ses places sont disponibles. & Offres & ST-09 \\
 RG-12 & Le nombre de places d'une offre ne peut descendre sous le nombre de places déjà attribuées. & Offres & — \\
 RG-13 & Une offre dont des stagiaires ont été retenus ne peut être supprimée (seulement clôturée). & Offres & — \\
 RG-14 & Une offre est disponible si elle est active, que sa date limite n'est pas dépassée et qu'il reste au moins une place. & Offres & ST-11 \\
-RG-15 & Compatibilité : la filière de l'étudiant doit être ciblée (liste vide = toutes), son niveau au moins égal au niveau minimum et la date limite non dépassée ; le score de compétences est indicatif. & Offres & ST-10 \\
+RG-15 & Chaque offre a un type de stage qui fixe les niveaux autorisés : observation (initiation) pour les INE1, ouvrier / PFA pour les INE1 et INE2, PFE pour les INE3. Compatibilité : la filière de l'étudiant doit être ciblée (liste vide = toutes), son niveau doit être autorisé par le type de l'offre et la date limite non dépassée ; le score de compétences est indicatif. Une candidature incompatible est rejetée avec un motif explicite. & Offres, BPMN & ST-10, PT-11 \\
+RG-33 & Un étudiant ne voit que les offres dont le type de stage est ouvert à son niveau (filtrage côté serveur). & Offres & ST-13 \\
 RG-16 & L'acceptation d'une candidature réserve une place ; à zéro place, l'offre passe à \code{POURVUE}. La réservation ne peut pas rendre le compteur négatif. & Offres, BPMN & PT-01 \\
 \multicolumn{4}{@{}l}{\textit{Candidatures}}\\
 RG-17 & Un étudiant ne peut avoir qu'une candidature non annulée par offre. & Candidatures, BPMN & RT-02, PT-02 \\

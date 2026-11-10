@@ -71,11 +71,23 @@ public class EtudiantServiceImpl implements EtudiantService {
 
     @Override
     public Etudiant modifierEtudiant(Etudiant etudiant) throws ServiceException {
-        SoapSecurity.exiger(context, Role.RESPONSABLE);
+        Utilisateur u = SoapSecurity.exiger(context, Role.RESPONSABLE, Role.ETUDIANT);
         if (etudiant == null) {
             throw ServiceException.invalide(List.of("Aucun étudiant fourni"));
         }
+        if (u.aRole(Role.ETUDIANT) && !u.refId().equals(etudiant.getMatricule())) {
+            throw ServiceException.of(ServiceException.ACCES_REFUSE, "Vous ne pouvez modifier que votre propre profil");
+        }
         Etudiant existant = charger(etudiant.getMatricule());
+        if (u.aRole(Role.ETUDIANT)) {
+            // « Mon profil » : seules les coordonnées et les compétences sont modifiables ;
+            // matricule, identité, filière, niveau et statut restent gérés par l'école
+            existant.setEmail(etudiant.getEmail());
+            existant.setTelephone(etudiant.getTelephone());
+            existant.setAdresse(etudiant.getAdresse());
+            existant.setCompetences(etudiant.getCompetences());
+            etudiant = existant;
+        }
         if (etudiant.getStatut() == null) {
             etudiant.setStatut(existant.getStatut());
         }

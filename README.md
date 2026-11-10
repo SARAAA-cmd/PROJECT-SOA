@@ -10,7 +10,7 @@ Prérequis : Java 21, Maven 3.9 et, pour voir les e-mails, [Mailpit](https://mai
 
 ```bash
 mailpit                # boîte e-mail de test : http://localhost:8025 (SMTP sur le port 1025)
-mvn package            # compile, exécute les 28 tests d'intégration, produit target/gestion-stages.jar
+mvn package            # compile, exécute les 31 tests d'intégration, produit target/gestion-stages.jar
 java -jar target/gestion-stages.jar
 ```
 
@@ -61,9 +61,9 @@ son e-mail (masqués) ni son adresse.
 
 ## Tests
 
-- `mvn test` — 28 tests d'intégration de bout en bout (SOAP, REST, processus BPMN, pannes simulées).
+- `mvn test` — 31 tests d'intégration de bout en bout (SOAP, REST, processus BPMN, pannes simulées).
   Sur PostgreSQL : `mvn test -Ddb.url=jdbc:postgresql://… -Dbpmn.db.url=…`.
-- **Postman** : `docs/postman/gestion-stages.postman_collection.json` (39 requêtes, 45 assertions, à lancer dans l'ordre sur une base neuve).
+- **Postman** : `docs/postman/gestion-stages.postman_collection.json` (39 requêtes, 46 assertions, à lancer dans l'ordre sur une base neuve).
 - **SoapUI** : importer les WSDL ; requêtes prêtes à l'emploi dans `docs/soap/` (réponses obtenues dans `docs/soap/reponses/`).
 
 ## Organisation du code
@@ -90,7 +90,11 @@ tools/      Génération du BPMN, rendu du diagramme, captures de l'interface
 
 - 5 candidatures en cours au maximum par étudiant ;
 - une candidature n'est annulable que tant qu'elle est « déposée » : dès que l'entreprise clique sur « Examiner », elle passe « en cours d'évaluation » ;
-- une offre convient à un étudiant si sa filière et son niveau sont acceptés et que la date limite n'est pas dépassée ;
+- chaque offre a un **type de stage** qui fixe les années autorisées : stage d'observation (initiation) pour les INE1,
+  stage ouvrier / PFA pour les INE1 et INE2, stage PFE pour les INE3 ; un étudiant ne voit que les offres ouvertes à son niveau ;
+- une offre convient à un étudiant si sa filière est ciblée, que son niveau est autorisé par le type de stage et que la date limite n'est pas dépassée ;
+- « Mon profil » : l'étudiant modifie ses coordonnées et compétences, l'entreprise ses coordonnées et son contact ;
+  le reste est géré par l'école ; « Ma clé d'API » est réservée au responsable ;
 - une place est retirée de l'offre à chaque acceptation (l'offre devient « pourvue » à zéro).
 
 ## Rapport

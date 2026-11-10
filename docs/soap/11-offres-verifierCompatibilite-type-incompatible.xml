@@ -1,0 +1,20 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:off="http://stages.universite.com/offres"
+                  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+  <soapenv:Header>
+    <wsse:Security soapenv:mustUnderstand="1">
+      <wsse:UsernameToken>
+        <wsse:Username>admin</wsse:Username>
+        <wsse:Password>Admin@2026</wsse:Password>
+      </wsse:UsernameToken>
+    </wsse:Security>
+  </soapenv:Header>
+  <soapenv:Body>
+    <off:verifierCompatibilite>
+      <offreId>2</offreId>
+      <filiere>ASEDS</filiere>
+      <niveau>INE2</niveau>
+      <competences>Java, SOAP</competences>
+    </off:verifierCompatibilite>
+  </soapenv:Body>
+</soapenv:Envelope>

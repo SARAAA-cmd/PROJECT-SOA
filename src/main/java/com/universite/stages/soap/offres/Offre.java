@@ -40,7 +40,11 @@ public class Offre {
     private int placesDisponibles;
     /** Filières ciblées séparées par des virgules (vide = toutes). */
     private String filieresCiblees;
-    private String niveauMinimum;
+    /** Type de stage : OBSERVATION, OUVRIER_PFA ou PFE (voir TypeStage). */
+    @XmlElement(required = true)
+    private String typeStage;
+    /** Niveaux ouverts, déduits du type (information, ignorée en entrée). */
+    private String niveauxAutorises;
     private String lieu;
     private String statut;
     @XmlJavaTypeAdapter(LocalDateAdapter.class)
@@ -70,8 +74,10 @@ public class Offre {
     public void setPlacesDisponibles(int placesDisponibles) { this.placesDisponibles = placesDisponibles; }
     public String getFilieresCiblees() { return filieresCiblees; }
     public void setFilieresCiblees(String filieresCiblees) { this.filieresCiblees = filieresCiblees; }
-    public String getNiveauMinimum() { return niveauMinimum; }
-    public void setNiveauMinimum(String niveauMinimum) { this.niveauMinimum = niveauMinimum; }
+    public String getTypeStage() { return typeStage; }
+    public void setTypeStage(String typeStage) { this.typeStage = typeStage; }
+    public String getNiveauxAutorises() { return niveauxAutorises; }
+    public void setNiveauxAutorises(String niveauxAutorises) { this.niveauxAutorises = niveauxAutorises; }
     public String getLieu() { return lieu; }
     public void setLieu(String lieu) { this.lieu = lieu; }
     public String getStatut() { return statut; }

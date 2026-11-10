@@ -7,6 +7,7 @@
         <compatible>true</compatible>
         <filiereCompatible>true</filiereCompatible>
         <niveauCompatible>true</niveauCompatible>
+        <dateLimiteRespectee>true</dateLimiteRespectee>
         <scoreCompetences>50</scoreCompetences>
         <competenceManquante>SQL</competenceManquante>
         <competenceManquante>Gestion de projet</competenceManquante>

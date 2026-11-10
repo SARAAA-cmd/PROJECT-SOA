@@ -14,14 +14,14 @@ en direct. La charte reprend le bleu de l'INPT. Après connexion, le menu s'adap
 \toprule
 \textbf{Acteur} & \textbf{Écrans} \\
 \midrule
-Étudiant & Offres disponibles avec score d'adéquation et motifs d'incompatibilité ; dépôt de candidature (déclenche le
-  processus) ; suivi des candidatures, historique, complément et annulation ; notifications ; « Mon stage » (progression,
-  comptes rendus, évaluations) \\
-Entreprise & Candidatures à évaluer (profil, compétences, lettre, CV) et formulaire de décision ; publication et
-  clôture d'offres (SOAP) ; candidatures reçues ; stagiaires, démarrage du stage et évaluations \\
+Étudiant & Offres ouvertes à son année d'études, avec type de stage (badge et filtre), score d'adéquation et motifs d'incompatibilité ; dépôt de candidature (déclenche le
+  processus) ; suivi des candidatures (chronologie en 5 étapes), complément et annulation ; notifications ; « Mon stage » (progression,
+  comptes rendus, évaluations) ; « Mon profil » (coordonnées et compétences modifiables) \\
+Entreprise & Candidatures à évaluer (profil, compétences, lettre, CV) et formulaire de décision ; publication (choix
+  du type de stage) et clôture d'offres (SOAP) ; candidatures reçues ; stagiaires, démarrage du stage et évaluations ; « Mon profil » (coordonnées et contact modifiables) \\
 Responsable & Tableau de bord ; processus BPMN et instances (diagramme surligné, trace, variables) ; incidents
-  (relancer, abandonner) ; gestion des étudiants et entreprises (SOAP) ; offres, candidatures et stages ; supervision
-  (pannes simulées, campagne de rappels) \\
+  (relancer, abandonner) ; gestion des étudiants et entreprises (SOAP) ; offres (avec leur type de stage), candidatures et stages ; supervision
+  (pannes simulées, campagne de rappels) ; « Ma clé d'API » \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -31,6 +31,17 @@ Responsable & Tableau de bord ; processus BPMN et instances (diagramme surligné
 \centering
 \includegraphics[width=0.92\textwidth]{figures/ui-etudiant-offres.png}
 \caption{Offres de stage : score d'adéquation et motifs d'incompatibilité calculés par \code{verifierCompatibilite}}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{0.49\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/ui-etudiant-offres-types.png}\\[-2pt]{\small (a) étudiant de 1re année : observation et ouvrier / PFA, filtre par type}
+\end{minipage}\hfill
+\begin{minipage}{0.49\textwidth}\centering
+  \includegraphics[width=\linewidth]{figures/ui-etudiant-profil.png}\\[-2pt]{\small (b) « Mon profil » : champs gérés par l'école en lecture seule}
+\end{minipage}
+\caption{Offres filtrées selon l'année d'études et profil de l'étudiant}
 \end{figure}
 
 \begin{figure}[H]

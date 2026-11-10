@@ -86,6 +86,17 @@ const LIBELLES = {
   JOURNALISEE: 'Journalisée', ECHEC_ENVOI: 'Échec d\'envoi', ARCHIVEE: 'Archivée',
   RESPONSABLE: 'Responsable des stages', ETUDIANT: 'Étudiant', ENTREPRISE: 'Entreprise', SYSTEME: 'Système',
 };
+
+// Types de stage de l'école : les niveaux autorisés découlent du type (règle appliquée par le service Offres)
+const TYPES_STAGE = {
+  OBSERVATION: { libelle: "Stage d'observation (initiation)", court: 'Observation', niveaux: 'INE1' },
+  OUVRIER_PFA: { libelle: 'Stage ouvrier / PFA', court: 'Ouvrier / PFA', niveaux: 'INE1, INE2' },
+  PFE: { libelle: 'Stage PFE', court: 'PFE', niveaux: 'INE3' },
+};
+const badgeType = (t) => (TYPES_STAGE[t] ? `<span class="type-stage t-${esc(t)}">${esc(TYPES_STAGE[t].libelle)}</span>` : '');
+const ANNEES = { INE1: '1re année (INE1)', INE2: '2e année (INE2)', INE3: '3e année (INE3)' };
+// statut de l'étudiant tel qu'il le lit dans « Mon profil »
+const STATUTS_PROFIL = { ACTIF: 'Disponible', EN_STAGE: 'En stage', SUSPENDU: 'Suspendu', DIPLOME: 'Diplômé' };
 const badge = (s) => `<span class="badge b-${esc(s)}">${esc(LIBELLES[s] || s)}</span>`;
 const date = (d) => (d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
 const dateHeure = (d) => (d ? new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—');
@@ -239,6 +250,9 @@ async function demarrerApplication() {
   $('#profil-nom').textContent = nom;
   $('#profil-role').textContent = LIBELLES[u.role];
   $('#profil-initiales').textContent = nom.split(/\s+/).filter(Boolean).slice(0, 2).map((m) => m[0].toUpperCase()).join('');
+  // menu du profil : « Mon profil » pour l'étudiant et l'entreprise, « Ma clé d'API » réservée au responsable
+  $('#btn-profil').hidden = !['ETUDIANT', 'ENTREPRISE'].includes(u.role);
+  $('#btn-cle').hidden = u.role !== 'RESPONSABLE';
   let vue = null;
   try { vue = sessionStorage.getItem('vue'); } catch (e) { vue = null; }
   afficher(MENUS[u.role].some((m) => m[0] === vue) ? vue : MENUS[u.role][0][0]);
@@ -263,13 +277,19 @@ VUES.offres = async (racine, u) => {
   const noms = await Promise.all(offres.map((o) => nomEntreprise(o.entrepriseId)));
   const mesComp = new Set(competences(moi.competences).map(norm));
 
+  const typesPresents = Object.keys(TYPES_STAGE).filter((t) => offres.some((o) => o.typeStage === t));
   racine.innerHTML = `
     <p class="muted">Profil : <strong>${esc(moi.filiere)} — ${esc(moi.niveau)}</strong> · statut ${badge(moi.statut)}
       · compétences : ${competences(moi.competences).map((c) => `<span class="tag">${esc(c)}</span>`).join(' ') || '—'}</p>
+    <p class="muted">Seules les offres ouvertes à votre année d'études sont affichées : ${esc(ANNEES[moi.niveau] || moi.niveau)}.</p>
+    ${typesPresents.length > 1 ? `<div class="filtres-type" role="group" aria-label="Type de stage">
+      <button class="filtre actif" data-type="">Tous les types</button>
+      ${typesPresents.map((t) => `<button class="filtre" data-type="${t}">${esc(TYPES_STAGE[t].libelle)}</button>`).join('')}</div>` : ''}
     ${moi.statut !== 'ACTIF' ? `<div class="encart attention">Votre statut (${esc(LIBELLES[moi.statut])}) ne vous permet pas de déposer de nouvelles candidatures.</div>` : ''}
     <div class="grille">${offres.map((o, i) => {
       const c = compat[i];
-      return `<div class="carte">
+      return `<div class="carte" data-type-stage="${esc(o.typeStage)}">
+        ${badgeType(o.typeStage)}
         <h3>${esc(o.titre)}</h3>
         <div class="meta"><span>${esc(noms[i])}</span><span>${esc(o.lieu || '—')}</span><span>${o.dureeMois} mois</span>
           <span>avant le ${date(o.dateLimite)}</span><span>${o.placesDisponibles} place(s)</span></div>
@@ -277,11 +297,16 @@ VUES.offres = async (racine, u) => {
         <div class="tags">${competences(o.competencesRequises).map((k) => `<span class="tag ${mesComp.has(norm(k)) ? 'ok' : ''}">${esc(k)}</span>`).join('')}</div>
         ${c ? `<div class="score" style="margin-top:12px">Adéquation compétences <div class="jauge"><div style="width:${c.scoreCompetences}%"></div></div> ${c.scoreCompetences}%</div>
           ${c.compatible ? '' : `<div class="encart ko">${liste(c.motif).map(esc).join('<br>')}</div>`}` : ''}
-        <div class="pied"><span class="muted">Niveau min. ${esc(o.niveauMinimum || '—')} · ${esc(o.filieresCiblees || 'toutes filières')}</span>
+        <div class="pied"><span class="muted">Ouvert à ${esc(o.niveauxAutorises || '—')} · ${esc(o.filieresCiblees || 'toutes filières')}</span>
           ${dejaPostule.has(o.id) ? '<span class="badge b-DEPOSEE">Candidature envoyée</span>'
             : `<button class="btn primaire postuler" data-postuler="${o.id}">Postuler</button>`}</div>
       </div>`;
     }).join('') || '<div class="vide">Aucune offre disponible</div>'}</div>`;
+
+  $$('.filtres-type .filtre', racine).forEach((f) => f.addEventListener('click', () => {
+    $$('.filtres-type .filtre', racine).forEach((x) => x.classList.toggle('actif', x === f));
+    $$('.grille > .carte', racine).forEach((c) => { c.hidden = !!f.dataset.type && c.dataset.typeStage !== f.dataset.type; });
+  }));
 
   $$('[data-postuler]', racine).forEach((b) => b.addEventListener('click', () => {
     const o = offres.find((x) => String(x.id) === b.dataset.postuler);
@@ -506,7 +531,8 @@ function tableauOffres(offres, actions, noms) {
     ...(noms ? [['Entreprise', (o) => esc(noms[o.entrepriseId] || o.entrepriseId)]] : []),
     ['Date limite', (o) => date(o.dateLimite)],
     ['Places', (o) => `${o.placesDisponibles} / ${o.nombrePlaces}`],
-    ['Cible', (o) => `${esc(o.filieresCiblees || 'Toutes')}<div class="muted">niveau ≥ ${esc(o.niveauMinimum || '—')}</div>`],
+    ['Type de stage', (o) => `${badgeType(o.typeStage)}<div class="muted">ouvert à ${esc(o.niveauxAutorises || '—')}</div>`],
+    ['Filières', (o) => esc(o.filieresCiblees || 'Toutes')],
     ['Statut', (o) => badge(o.statut)],
     ...(actions ? [['', (o) => (o.statut === 'ACTIVE' ? `<button class="btn" data-cloturer="${o.id}">Clôturer</button>` : '')]] : []),
   ], offres, { vide: 'Aucune offre publiée' });
@@ -536,7 +562,8 @@ async function formulaireOffre(entrepriseId) {
       <label>Date limite<input name="dateLimite" type="date" value="${limite}" required></label>
       <label>Lieu<input name="lieu"></label>
       <label>Filières ciblées<input name="filieresCiblees" placeholder="AMOA, Génie Logiciel"></label>
-      <label>Niveau minimum<select name="niveauMinimum"><option value="">—</option>${['INE1', 'INE2', 'INE3'].map((n) => `<option>${n}</option>`).join('')}</select></label>
+      <label>Type de stage<select name="typeStage" required><option value="">Choisir…</option>${Object.entries(TYPES_STAGE).map(([k, t]) => `<option value="${k}">${esc(t.libelle)} — ${esc(t.niveaux)}</option>`).join('')}</select>
+        <span class="aide">Les années d'études autorisées découlent du type choisi.</span></label>
       <div><button class="btn primaire" type="submit">${entrepriseId ? "Publier l'offre" : "Publier l'offre (SOAP creerOffre)"}</button></div>
     </form>`);
   $('#f-offre', m).addEventListener('submit', (e) => {
@@ -829,6 +856,66 @@ VUES.supervision = async (racine) => {
   }));
 };
 
+// ---------------------------------------------------------------- Mon profil (étudiant, entreprise)
+// Lecture et modification via les opérations SOAP consulterEtudiant / modifierEtudiant et
+// consulterEntreprise / modifierEntreprise ; le serveur n'autorise que son propre profil et les champs modifiables.
+async function monProfil() {
+  const u = Auth.utilisateur();
+  const fixe = (libelle, valeur) => `<div><dt>${esc(libelle)}</dt><dd>${esc(valeur || '—')}</dd></div>`;
+  const champ = (nom, libelle, valeur, attrs = '') => `<label>${esc(libelle)}<input name="${nom}" value="${esc(valeur || '')}" ${attrs}></label>`;
+  if (u.role === 'ETUDIANT') {
+    const e = await Soap.appeler('etudiants', 'consulterEtudiant', { matricule: u.refId });
+    const m = Modale.ouvrir(`
+      <h2>Mon profil</h2>
+      <h3>Informations gérées par l'école</h3>
+      <dl class="fiche">${fixe('Matricule', e.matricule)}${fixe('Nom', e.nom)}${fixe('Prénom', e.prenom)}${fixe('Filière', e.filiere)}
+        ${fixe('Niveau', ANNEES[e.niveau] || e.niveau)}${fixe('Statut', STATUTS_PROFIL[e.statut] || LIBELLES[e.statut] || e.statut)}</dl>
+      <p class="muted">Pour corriger ces informations, contactez le bureau des stages.</p>
+      <h3>Mes coordonnées</h3>
+      <form id="f-profil" class="formulaire-grille">
+        ${champ('email', 'E-mail', e.email, 'type="email" required')}${champ('telephone', 'Téléphone', e.telephone, 'placeholder="+212 6 12 34 56 78"')}
+        <label style="grid-column:1/-1">Adresse<input name="adresse" value="${esc(e.adresse || '')}"></label>
+        <label style="grid-column:1/-1">Compétences (séparées par des virgules)<input name="competences" value="${esc(e.competences || '')}"></label>
+        <div><button class="btn primaire" type="submit">Enregistrer</button></div>
+      </form>`);
+    $('#f-profil', m).addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const f = formulaire(ev.target);
+      action(ev.submitter, async () => {
+        await Soap.appeler('etudiants', 'modifierEtudiant', { etudiant: { ...e, ...f } });
+        toast('Profil mis à jour', 'ok');
+        Modale.fermer();
+        if (vueCourante === 'offres') afficher('offres');
+      });
+    });
+    return;
+  }
+  const e = await Soap.appeler('entreprises', 'consulterEntreprise', { entrepriseId: u.refId });
+  const m = Modale.ouvrir(`
+    <h2>Mon profil</h2>
+    <h3>Informations gérées par l'école</h3>
+    <dl class="fiche">${fixe('Raison sociale', e.raisonSociale)}${fixe("Secteur d'activité", e.secteurActivite)}</dl>
+    <form id="f-profil" class="formulaire-grille">
+      <h3 style="grid-column:1/-1">Coordonnées</h3>
+      <label style="grid-column:1/-1">Adresse<input name="adresse" value="${esc(e.adresse || '')}"></label>
+      ${champ('ville', 'Ville', e.ville)}${champ('email', 'E-mail', e.email, 'type="email" required')}${champ('telephone', 'Téléphone', e.telephone)}
+      <h3 style="grid-column:1/-1">Responsable de contact</h3>
+      ${champ('contactNom', 'Nom', e.contactNom, 'required')}${champ('contactFonction', 'Fonction', e.contactFonction)}
+      ${champ('contactEmail', 'E-mail', e.contactEmail, 'type="email" required')}${champ('contactTelephone', 'Téléphone', e.contactTelephone)}
+      <div><button class="btn primaire" type="submit">Enregistrer</button></div>
+    </form>`);
+  $('#f-profil', m).addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const f = formulaire(ev.target);
+    action(ev.submitter, async () => {
+      await Soap.appeler('entreprises', 'modifierEntreprise', { entreprise: { ...e, ...f } });
+      cacheEntreprises = null;
+      toast('Profil mis à jour', 'ok');
+      Modale.fermer();
+    });
+  });
+}
+
 // ======================================================================
 // Démarrage
 // ======================================================================
@@ -850,6 +937,10 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#form-connexion').requestSubmit();
   }));
   document.addEventListener('click', (e) => { if (!e.target.closest('#profil')) $('#profil').removeAttribute('open'); });
+  $('#btn-profil').addEventListener('click', () => {
+    $('#profil').removeAttribute('open');
+    monProfil().catch((e) => toast(signalerErreur(e, 'chargement'), 'ko'));
+  });
   $('#btn-cle').addEventListener('click', async () => {
     $('#profil').removeAttribute('open');
     if (!confirm('Générer une nouvelle clé d\'API ? L\'ancienne sera révoquée.')) return;

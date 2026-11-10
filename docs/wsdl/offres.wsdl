@@ -7,14 +7,26 @@
 <xsd:import namespace="http://stages.universite.com/commun" schemaLocation="http://localhost:8090/ws/offres?xsd=2"/>
 </xsd:schema>
 </types>
+<message name="listerOffresExpirantBientot">
+<part name="parameters" element="tns:listerOffresExpirantBientot"/>
+</message>
+<message name="listerOffresExpirantBientotResponse">
+<part name="parameters" element="tns:listerOffresExpirantBientotResponse"/>
+</message>
+<message name="ServiceException">
+<part xmlns:ns1="http://stages.universite.com/commun" name="fault" element="ns1:ServiceFault"/>
+</message>
+<message name="listerOffres">
+<part name="parameters" element="tns:listerOffres"/>
+</message>
+<message name="listerOffresResponse">
+<part name="parameters" element="tns:listerOffresResponse"/>
+</message>
 <message name="creerOffre">
 <part name="parameters" element="tns:creerOffre"/>
 </message>
 <message name="creerOffreResponse">
 <part name="parameters" element="tns:creerOffreResponse"/>
-</message>
-<message name="ServiceException">
-<part xmlns:ns1="http://stages.universite.com/commun" name="fault" element="ns1:ServiceFault"/>
 </message>
 <message name="consulterOffre">
 <part name="parameters" element="tns:consulterOffre"/>
@@ -58,19 +70,17 @@
 <message name="reserverPlaceResponse">
 <part name="parameters" element="tns:reserverPlaceResponse"/>
 </message>
-<message name="listerOffresExpirantBientot">
-<part name="parameters" element="tns:listerOffresExpirantBientot"/>
-</message>
-<message name="listerOffresExpirantBientotResponse">
-<part name="parameters" element="tns:listerOffresExpirantBientotResponse"/>
-</message>
-<message name="listerOffres">
-<part name="parameters" element="tns:listerOffres"/>
-</message>
-<message name="listerOffresResponse">
-<part name="parameters" element="tns:listerOffresResponse"/>
-</message>
 <portType name="OffreService">
+<operation name="listerOffresExpirantBientot">
+<input wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresExpirantBientotRequest" message="tns:listerOffresExpirantBientot"/>
+<output wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresExpirantBientotResponse" message="tns:listerOffresExpirantBientotResponse"/>
+<fault message="tns:ServiceException" name="ServiceException" wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresExpirantBientot/Fault/ServiceException"/>
+</operation>
+<operation name="listerOffres">
+<input wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresRequest" message="tns:listerOffres"/>
+<output wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresResponse" message="tns:listerOffresResponse"/>
+<fault message="tns:ServiceException" name="ServiceException" wsam:Action="http://stages.universite.com/offres/OffreService/listerOffres/Fault/ServiceException"/>
+</operation>
 <operation name="creerOffre">
 <input wsam:Action="http://stages.universite.com/offres/OffreService/creerOffreRequest" message="tns:creerOffre"/>
 <output wsam:Action="http://stages.universite.com/offres/OffreService/creerOffreResponse" message="tns:creerOffreResponse"/>
@@ -111,19 +121,33 @@
 <output wsam:Action="http://stages.universite.com/offres/OffreService/reserverPlaceResponse" message="tns:reserverPlaceResponse"/>
 <fault message="tns:ServiceException" name="ServiceException" wsam:Action="http://stages.universite.com/offres/OffreService/reserverPlace/Fault/ServiceException"/>
 </operation>
-<operation name="listerOffresExpirantBientot">
-<input wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresExpirantBientotRequest" message="tns:listerOffresExpirantBientot"/>
-<output wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresExpirantBientotResponse" message="tns:listerOffresExpirantBientotResponse"/>
-<fault message="tns:ServiceException" name="ServiceException" wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresExpirantBientot/Fault/ServiceException"/>
-</operation>
-<operation name="listerOffres">
-<input wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresRequest" message="tns:listerOffres"/>
-<output wsam:Action="http://stages.universite.com/offres/OffreService/listerOffresResponse" message="tns:listerOffresResponse"/>
-<fault message="tns:ServiceException" name="ServiceException" wsam:Action="http://stages.universite.com/offres/OffreService/listerOffres/Fault/ServiceException"/>
-</operation>
 </portType>
 <binding name="OffrePortBinding" type="tns:OffreService">
 <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+<operation name="listerOffresExpirantBientot">
+<soap:operation soapAction=""/>
+<input>
+<soap:body use="literal"/>
+</input>
+<output>
+<soap:body use="literal"/>
+</output>
+<fault name="ServiceException">
+<soap:fault name="ServiceException" use="literal"/>
+</fault>
+</operation>
+<operation name="listerOffres">
+<soap:operation soapAction=""/>
+<input>
+<soap:body use="literal"/>
+</input>
+<output>
+<soap:body use="literal"/>
+</output>
+<fault name="ServiceException">
+<soap:fault name="ServiceException" use="literal"/>
+</fault>
+</operation>
 <operation name="creerOffre">
 <soap:operation soapAction=""/>
 <input>
@@ -209,30 +233,6 @@
 </fault>
 </operation>
 <operation name="reserverPlace">
-<soap:operation soapAction=""/>
-<input>
-<soap:body use="literal"/>
-</input>
-<output>
-<soap:body use="literal"/>
-</output>
-<fault name="ServiceException">
-<soap:fault name="ServiceException" use="literal"/>
-</fault>
-</operation>
-<operation name="listerOffresExpirantBientot">
-<soap:operation soapAction=""/>
-<input>
-<soap:body use="literal"/>
-</input>
-<output>
-<soap:body use="literal"/>
-</output>
-<fault name="ServiceException">
-<soap:fault name="ServiceException" use="literal"/>
-</fault>
-</operation>
-<operation name="listerOffres">
 <soap:operation soapAction=""/>
 <input>
 <soap:body use="literal"/>

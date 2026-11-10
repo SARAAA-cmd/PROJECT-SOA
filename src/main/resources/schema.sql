@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS offre (
     nombre_places        INT          NOT NULL,
     places_disponibles   INT          NOT NULL,
     filieres_ciblees     VARCHAR(300),
-    niveau_minimum       VARCHAR(5),
+    type_stage           VARCHAR(20),
     lieu                 VARCHAR(100),
     statut               VARCHAR(20)  NOT NULL,
     date_publication     DATE         NOT NULL
@@ -151,5 +151,5 @@ CREATE TABLE IF NOT EXISTS evaluation (
 -- Migration : niveaux LMD -> années du cycle ingénieur INPT (sans effet sur une base déjà migrée)
 UPDATE etudiant SET niveau = CASE WHEN niveau IN ('L1', 'L2', 'L3') THEN 'INE1' WHEN niveau = 'M1' THEN 'INE2' ELSE 'INE3' END
     WHERE niveau IN ('L1', 'L2', 'L3', 'M1', 'M2', 'D');
-UPDATE offre SET niveau_minimum = CASE WHEN niveau_minimum IN ('L1', 'L2', 'L3') THEN 'INE1' WHEN niveau_minimum = 'M1' THEN 'INE2' ELSE 'INE3' END
-    WHERE niveau_minimum IN ('L1', 'L2', 'L3', 'M1', 'M2', 'D');
+-- Migration : le « niveau minimum » des offres est remplacé par le type de stage (voir Database.migrerTypeStage)
+ALTER TABLE offre ADD COLUMN IF NOT EXISTS type_stage VARCHAR(20);

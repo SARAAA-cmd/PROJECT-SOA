@@ -1,5 +1,6 @@
 package com.universite.stages.soap.entreprises;
 
+import com.universite.stages.common.Masquage;
 import com.universite.stages.clients.SoapClients;
 import com.universite.stages.common.Validation;
 import com.universite.stages.security.Role;
@@ -47,8 +48,28 @@ public class EntrepriseServiceImpl implements EntrepriseService {
 
     @Override
     public Entreprise consulterEntreprise(long entrepriseId) throws ServiceException {
-        SoapSecurity.utilisateur(context);
-        return charger(entrepriseId);
+        Utilisateur u = SoapSecurity.utilisateur(context);
+        if (u.aRole(Role.ENTREPRISE) && !String.valueOf(entrepriseId).equals(u.refId())) {
+            throw ServiceException.of(ServiceException.ACCES_REFUSE, "Vous ne pouvez consulter que le profil de votre entreprise");
+        }
+        return vuePour(u, charger(entrepriseId));
+    }
+
+    /**
+     * Coordonnées d'une entreprise : complètes pour elle-même, le responsable et l'orchestrateur ;
+     * masquées pour les autres utilisateurs (seules la raison sociale, le secteur et la ville restent lisibles).
+     */
+    private static Entreprise vuePour(Utilisateur u, Entreprise e) {
+        boolean complete = u.aRole(Role.RESPONSABLE) || u.aRole(Role.SYSTEME)
+                || (u.aRole(Role.ENTREPRISE) && String.valueOf(e.getId()).equals(u.refId()));
+        if (!complete) {
+            e.setAdresse(null);
+            e.setEmail(Masquage.email(e.getEmail()));
+            e.setTelephone(Masquage.telephone(e.getTelephone()));
+            e.setContactEmail(Masquage.email(e.getContactEmail()));
+            e.setContactTelephone(Masquage.telephone(e.getContactTelephone()));
+        }
+        return e;
     }
 
     @Override
@@ -62,9 +83,11 @@ public class EntrepriseServiceImpl implements EntrepriseService {
             if (!String.valueOf(entreprise.getId()).equals(u.refId())) {
                 throw ServiceException.of(ServiceException.ACCES_REFUSE, "Vous ne pouvez modifier que votre entreprise");
             }
-            // seul le responsable des stages peut changer le référencement
+            // seul le responsable des stages peut changer le référencement, la raison sociale et le secteur
             entreprise.setReferencee(existant.isReferencee());
             entreprise.setDateReferencement(existant.getDateReferencement());
+            entreprise.setRaisonSociale(existant.getRaisonSociale());
+            entreprise.setSecteurActivite(existant.getSecteurActivite());
         }
         valider(entreprise);
         if (dao.raisonSocialeUtilisee(entreprise.getRaisonSociale(), entreprise.getId())) {
@@ -91,8 +114,8 @@ public class EntrepriseServiceImpl implements EntrepriseService {
 
     @Override
     public List<Entreprise> listerEntreprises(String secteurActivite) throws ServiceException {
-        SoapSecurity.utilisateur(context);
-        return dao.lister(secteurActivite);
+        Utilisateur u = SoapSecurity.utilisateur(context);
+        return dao.lister(secteurActivite).stream().map(e -> vuePour(u, e)).toList();
     }
 
     @Override
