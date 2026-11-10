@@ -64,7 +64,6 @@ son e-mail (masqués) ni son adresse.
 - `mvn test` — 28 tests d'intégration de bout en bout (SOAP, REST, processus BPMN, pannes simulées).
   Sur PostgreSQL : `mvn test -Ddb.url=jdbc:postgresql://… -Dbpmn.db.url=…`.
 - **Postman** : `docs/postman/gestion-stages.postman_collection.json` (39 requêtes, 45 assertions, à lancer dans l'ordre sur une base neuve).
-- **Bonita** : `docs/bonita/traitement-candidature-bonita.bpmn` à importer dans Bonita Studio (voir `docs/bonita/GUIDE_BONITA.md`).
 - **SoapUI** : importer les WSDL ; requêtes prêtes à l'emploi dans `docs/soap/` (réponses obtenues dans `docs/soap/reponses/`).
 
 ## Organisation du code
@@ -82,7 +81,7 @@ src/main/resources/
 ├── processes/candidature-stage.bpmn20.xml   Processus BPMN 2.0 (modèle + diagramme)
 ├── schema.sql                               Schéma relationnel
 └── public/                                  Interface web (HTML/CSS/JS, bpmn-js)
-docs/       WSDL exportés, requêtes SOAP, collection Postman, guide Bonita, script vidéo
+docs/       WSDL exportés, requêtes SOAP, collection Postman, script vidéo
 rapport/    Rapport technique LaTeX (rapport.tex → rapport.pdf)
 tools/      Génération du BPMN, rendu du diagramme, captures de l'interface
 ```

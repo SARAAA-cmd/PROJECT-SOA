@@ -19,7 +19,6 @@ du code, simplement en changeant l'adresse de base.
   % clients
   \node[cli] (ui) {Interface web\\\scriptsize HTML/JS};
   \node[cli, right=6mm of ui] (outils) {SoapUI / Postman};
-  \node[cli, right=6mm of outils] (bonita) {Bonita Studio\\\scriptsize (option)};
   % serveur
   \node[svc=soap, below=16mm of ui, xshift=-12mm] (etu) {\textbf{1. Étudiants}\\\scriptsize SOAP \code{/ws/etudiants}};
   \node[svc=soap, below=of etu] (ent) {\textbf{2. Entreprises}\\\scriptsize SOAP \code{/ws/entreprises}};
@@ -29,7 +28,7 @@ du code, simplement en changeant l'adresse de base.
   \node[svc=rest, below=of cand] (notif) {\textbf{5. Notifications}\\\scriptsize REST \code{/api/notifications}};
   \node[svc=rest, below=of notif] (stage) {\textbf{6. Suivi des stages}\\\scriptsize REST \code{/api/stages}};
   \begin{scope}[on background layer]
-    \node[draw=primaire, dashed, rounded corners=6pt, fit=(etu)(off)(orch)(cand)(stage), inner sep=10pt, label={[primaire,font=\sffamily\scriptsize\bfseries,anchor=south]north:Serveur HTTP :8090 — sécurité WS-Security (SOAP) / HTTP Basic (REST)}] (srv) {};
+    \node[draw=primaire, dashed, rounded corners=6pt, fit=(etu)(off)(orch)(cand)(stage), inner sep=10pt, label={[primaire,font=\sffamily\scriptsize\bfseries,anchor=south]north:Serveur HTTP :8090 — sécurité WS-Security (SOAP) / clé d'API ou HTTP Basic (REST)}] (srv) {};
   \end{scope}
   % bases
   \node[db, below=12mm of off, xshift=30mm] (base) {\scriptsize Base \og stages \fg{}\\\scriptsize H2 / PostgreSQL};
@@ -37,7 +36,6 @@ du code, simplement en changeant l'adresse de base.
   % flux
   \draw[fl] (ui) -- node[left, font=\scriptsize, pos=0.35]{SOAP + REST} (ui |- srv.north);
   \draw[fl] (outils) -- (outils |- srv.north);
-  \draw[fl, dashed] (bonita) -- (bonita |- srv.north);
   \draw[fl2] (orch.west) -- node[above, font=\scriptsize]{SOAP} (ent.east);
   \draw[fl2] (orch.west |- etu.east) -- (etu.east);
   \draw[fl2] (orch.west |- off.east) -- (off.east);

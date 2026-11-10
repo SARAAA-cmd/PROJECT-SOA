@@ -4,11 +4,11 @@
 Le processus « Traitement d'une candidature de stage » est modélisé en \textbf{BPMN 2.0} standard
 (\code{candidature-stage.bpmn20.xml}, modèle et diagramme BPMN-DI) et exécuté par le moteur \textbf{Flowable},
 embarqué dans la plateforme. Flowable est l'« outil équivalent » à Bonita autorisé par le sujet : il exécute le même
-standard, ce qui permet de démontrer une orchestration \emph{réellement exécutée} et testée automatiquement. Le fichier
-reste importable dans Bonita Studio, Camunda Modeler ou bpmn.io (procédure en section~\ref{sec:bonita}).
+standard, ce qui permet de démontrer une orchestration \emph{réellement exécutée} et testée automatiquement. Le fichier,
+conforme à la norme, peut être ouvert dans tout modeleur BPMN 2.0 (bpmn.io, Camunda Modeler…).
 
 Chaque \textbf{tâche de service} est reliée à un délégué Java qui appelle un service SOAP ou REST \emph{par le
-réseau}, exactement comme le ferait un connecteur Bonita. Les tâches humaines (décision de l'entreprise, traitement
+réseau}. Les tâches humaines (décision de l'entreprise, traitement
 d'un incident) sont exposées par l'API \code{/api/processus} et l'interface web.
 
 \begin{sidewaysfigure}
@@ -127,17 +127,3 @@ vérifient automatiquement ces comportements.
         informations au diagramme (figure~\ref{fig:ui-instance}).
 \end{description}
 
-\section{Reproduction dans Bonita Studio}\label{sec:bonita}
-Le guide \code{docs/bonita/GUIDE\_BONITA.md} détaille la reproduction du processus dans Bonita :
-\begin{enumerate}
-  \item importer \code{docs/bonita/traitement-candidature-bonita.bpmn} (\emph{Fichier › Importer › BPMN 2.0}), variante
-        préparée pour Bonita : flux à plat (Bonita ne gère pas les sous-processus embarqués), un événement d'erreur de
-        bordure sur chaque tâche critique, aucune extension propriétaire, noms de tâches courts adaptés à la taille fixe
-        des tâches de Bonita. L'import a été vérifié dans Bonita Studio ;
-  \item déclarer les variables du processus (tableau du guide) ;
-  \item associer à chaque tâche de service un connecteur \emph{Web Service SOAP} ou \emph{REST} (même opérations
-        qu'au tableau~\ref{tab:etapes}, compte \code{systeme}) ;
-  \item configurer \emph{Lever un événement d'erreur} en cas d'échec des connecteurs critiques, et \emph{Ignorer
-        l'erreur} pour les notifications ;
-  \item définir les acteurs \emph{entreprise} et \emph{responsable} ainsi que le minuteur non interrompant.
-\end{enumerate}
