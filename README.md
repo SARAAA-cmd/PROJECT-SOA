@@ -64,7 +64,8 @@ son e-mail (masqués) ni son adresse.
 - `mvn test` — 31 tests d'intégration de bout en bout (SOAP, REST, processus BPMN, pannes simulées).
   Sur PostgreSQL : `mvn test -Ddb.url=jdbc:postgresql://… -Dbpmn.db.url=…`.
 - **Postman** : `docs/postman/gestion-stages.postman_collection.json` (39 requêtes, 46 assertions, à lancer dans l'ordre sur une base neuve).
-- **SoapUI** : importer les WSDL ; requêtes prêtes à l'emploi dans `docs/soap/` (réponses obtenues dans `docs/soap/reponses/`).
+- **Services SOAP avec Postman** (sans SoapUI) : `docs/postman/gestion-stages-soap.postman_collection.json` (3 WSDL + 11 requêtes SOAP, 28 assertions, base neuve).
+- **SoapUI** (facultatif) : importer les WSDL ; requêtes prêtes à l'emploi dans `docs/soap/` (réponses obtenues dans `docs/soap/reponses/`).
 
 ## Organisation du code
 

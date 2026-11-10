@@ -1,0 +1,503 @@
+{
+  "info": {
+    "name": "Gestion des stages — services SOAP (Postman)",
+    "description": "Les trois services SOAP testés avec Postman (outil équivalent à SoapUI). Chaque requête contient l'enveloppe SOAP et l'en-tête WS-Security. À lancer sur une base neuve.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "soapUrl",
+      "value": "http://localhost:8090/ws"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Contrats WSDL",
+      "item": [
+        {
+          "name": "WSDL du service Etudiants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{soapUrl}}/etudiants?wsdl"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Opération verifierEtudiant décrite\", () => pm.expect(pm.response.text()).to.include('verifierEtudiant'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "WSDL du service Entreprises",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{soapUrl}}/entreprises?wsdl"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Opération consulterOffresEntreprise décrite\", () => pm.expect(pm.response.text()).to.include('consulterOffresEntreprise'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "WSDL du service Offres",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{soapUrl}}/offres?wsdl"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Opération verifierCompatibilite décrite\", () => pm.expect(pm.response.text()).to.include('verifierCompatibilite'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Requêtes SOAP",
+      "item": [
+        {
+          "name": "Ajouter un étudiant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:etu=\"http://stages.universite.com/etudiants\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <etu:ajouterEtudiant>\n      <etudiant>\n        <matricule>E2026010</matricule>\n        <nom>Bennani</nom>\n        <prenom>Salma</prenom>\n        <email>salma.bennani@etu.universite.example</email>\n        <telephone>+212 6 11 22 33 44</telephone>\n        <filiere>AMOA</filiere>\n        <niveau>INE2</niveau>\n        <competences>BPMN, UML, SQL</competences>\n      </etudiant>\n    </etu:ajouterEtudiant>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/etudiants"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Étudiant créé\", () => pm.expect(pm.response.text()).to.include('<matricule>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consulter un étudiant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:etu=\"http://stages.universite.com/etudiants\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <etu:consulterEtudiant><matricule>E2026001</matricule></etu:consulterEtudiant>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/etudiants"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Fiche renvoyée\", () => pm.expect(pm.response.text()).to.include('<prenom>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier un étudiant (suspendu → non éligible)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:etu=\"http://stages.universite.com/etudiants\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <etu:verifierEtudiant><matricule>E2026005</matricule></etu:verifierEtudiant>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/etudiants"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Non éligible\", () => pm.expect(pm.response.text()).to.include('<eligible>false</eligible>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ajouter un étudiant invalide → SOAP Fault",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:etu=\"http://stages.universite.com/etudiants\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <etu:ajouterEtudiant>\n      <etudiant><matricule>abc</matricule><nom>X</nom><prenom>Y</prenom><email>pas-un-email</email><filiere>AMOA</filiere><niveau>M9</niveau></etudiant>\n    </etu:ajouterEtudiant>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/etudiants"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 500 (SOAP Fault)\", () => pm.response.to.have.status(500));",
+                  "pm.test(\"Code DONNEES_INVALIDES\", () => pm.expect(pm.response.text()).to.include('DONNEES_INVALIDES'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier une entreprise (non référencée)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:ent=\"http://stages.universite.com/entreprises\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <ent:verifierEntreprise><entrepriseId>4</entrepriseId></ent:verifierEntreprise>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/entreprises"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Non référencée\", () => pm.expect(pm.response.text()).to.include('<referencee>false</referencee>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Offres d'une entreprise (composition SOAP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:ent=\"http://stages.universite.com/entreprises\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <ent:consulterOffresEntreprise><entrepriseId>1</entrepriseId></ent:consulterOffresEntreprise>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/entreprises"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Offres renvoyées\", () => pm.expect(pm.response.text()).to.include('<offre>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Créer une offre (type de stage)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:off=\"http://stages.universite.com/offres\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <off:creerOffre>\n      <offre>\n        <entrepriseId>2</entrepriseId>\n        <titre>Analyste fonctionnel junior</titre>\n        <description>Recueil des besoins et rédaction de spécifications.</description>\n        <competencesRequises>UML, BPMN, SQL</competencesRequises>\n        <dureeMois>4</dureeMois>\n        <dateLimite>2027-01-15</dateLimite>\n        <nombrePlaces>2</nombrePlaces>\n        <filieresCiblees>AMOA</filieresCiblees>\n        <typeStage>OUVRIER_PFA</typeStage>\n        <lieu>Rabat</lieu>\n      </offre>\n    </off:creerOffre>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/offres"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Type de stage enregistré\", () => pm.expect(pm.response.text()).to.include('<typeStage>OUVRIER_PFA</typeStage>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier la disponibilité (offre expirée)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:off=\"http://stages.universite.com/offres\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <off:verifierDisponibilite><offreId>5</offreId></off:verifierDisponibilite>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/offres"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Non disponible\", () => pm.expect(pm.response.text()).to.include('<disponible>false</disponible>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier la compatibilité (compatible)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:off=\"http://stages.universite.com/offres\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <off:verifierCompatibilite>\n      <offreId>1</offreId>\n      <filiere>AMOA</filiere>\n      <niveau>INE2</niveau>\n      <competences>BPMN, UML, Java</competences>\n    </off:verifierCompatibilite>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/offres"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Compatible\", () => pm.expect(pm.response.text()).to.include('<compatible>true</compatible>'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérifier la compatibilité (PFE refusé à un INE2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:off=\"http://stages.universite.com/offres\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Header>\n    <wsse:Security soapenv:mustUnderstand=\"1\">\n      <wsse:UsernameToken>\n        <wsse:Username>admin</wsse:Username>\n        <wsse:Password>Admin@2026</wsse:Password>\n      </wsse:UsernameToken>\n    </wsse:Security>\n  </soapenv:Header>\n  <soapenv:Body>\n    <off:verifierCompatibilite>\n      <offreId>2</offreId>\n      <filiere>ASEDS</filiere>\n      <niveau>INE2</niveau>\n      <competences>Java, SOAP</competences>\n    </off:verifierCompatibilite>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/offres"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Motif clair\", () => pm.expect(pm.response.text()).to.include('Cette offre de stage PFE est réservée aux étudiants de 3e année (INE3).'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Requête sans WS-Security → refusée",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/xml; charset=utf-8"
+              },
+              {
+                "key": "SOAPAction",
+                "value": "\"\""
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"\n                  xmlns:etu=\"http://stages.universite.com/etudiants\"\n                  xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\">\n  <soapenv:Body>\n    <etu:consulterEtudiant><matricule>E2026001</matricule></etu:consulterEtudiant>\n  </soapenv:Body>\n</soapenv:Envelope>\n",
+              "options": {
+                "raw": {
+                  "language": "xml"
+                }
+              }
+            },
+            "url": "{{soapUrl}}/etudiants"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 500 (SOAP Fault)\", () => pm.response.to.have.status(500));",
+                  "pm.test(\"Authentification échouée\", () => pm.expect(pm.response.text()).to.include('FailedAuthentication'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
